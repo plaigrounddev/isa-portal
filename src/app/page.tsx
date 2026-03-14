@@ -1,65 +1,216 @@
-import Image from "next/image";
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styles from './page.module.css';
+import Image from 'next/image';
 
 export default function Home() {
+  const router = useRouter();
+  const [view, setView] = useState<'initial' | 'signin'>('initial');
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate login
+    router.push('/portal');
+  };
+
+  const handleGuestBooking = () => {
+    router.push('/booking');
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className={styles.main}>
+      <header className={styles.header}>
+        <div className={styles.logoContainer}>
+          <div className={styles.logo}>ISA<span>.</span>TRAVEL</div>
+          <div className={styles.poweredBy}>Powered by CTMS Travel</div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <button className={styles.supportBtn} onClick={() => setIsContactOpen(true)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path>
+          </svg>
+          <span className={styles.supportBtnText}>Agent Support</span>
+        </button>
+      </header>
+
+      <section className={styles.hero}>
+        <div className={styles.heroLeft}>
+          {view === 'initial' ? (
+            <div className={styles.textContent} style={{ animation: 'fadeIn 0.4s ease forwards' }}>
+              <h1 className={styles.heroTitle}>
+                GLOBAL SPORTS<br />
+                <span>OPERATED AT SCALE.</span>
+              </h1>
+              <p className={styles.heroSubtitle}>
+                International travel coordination, multi-event schedules, and premium logistics support for athletes and families. Verified pathways.
+              </p>
+              <button
+                onClick={() => setView('signin')}
+                className="geometric-btn"
+                style={{ padding: '24px 48px', fontSize: '1.1rem', marginTop: '20px' }}
+              >
+                Start Booking
+              </button>
+            </div>
+          ) : (
+            <div className={styles.authContainer} style={{ animation: 'fadeIn 0.4s ease forwards', width: '100%', maxWidth: '500px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
+                <button
+                  onClick={() => setView('initial')}
+                  className="circle-arrow-btn"
+                  style={{ marginRight: '24px', transform: 'rotate(180deg)' }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <h2 className={styles.heroTitle} style={{ fontSize: '3rem', marginBottom: 0 }}>
+                  PORTAL<br />
+                  <span>ACCESS</span>
+                </h2>
+              </div>
+
+              <form onSubmit={handleSignIn} className={styles.formContainer}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>Email Address</label>
+                  <input
+                    type="email"
+                    className={styles.loginInput}
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>Password</label>
+                  <input
+                    type="password"
+                    className={styles.loginInput}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="geometric-btn" style={{ width: '100%', marginBottom: '24px' }}>
+                  Member Sign In
+                </button>
+              </form>
+
+              <div className={styles.divider}>
+                <span style={{ background: 'white' }}>OR</span>
+              </div>
+
+              <button onClick={handleGuestBooking} className="geometric-btn geometric-btn-secondary" style={{ width: '100%' }}>
+                Continue as Guest
+              </button>
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+
+        <div className={styles.heroRight}>
+          <Image
+            src="/hero-bg.png"
+            alt="Sports Action Background"
+            fill
+            priority
+            style={{ objectFit: 'cover' }}
+          />
+          <img
+            src="https://cdn.prod.website-files.com/687ea668cab796cde037ec77/68978c46a996f62b608074db_ISA%20Stamp-02.svg"
+            alt="ISA Stamp"
+            className={styles.floatingStampLogo}
+          />
+        </div>
+      </section>
+
+      {isContactOpen && (
+        <div className={styles.contactOverlay}>
+          <button className={styles.closeOverlayBtn} onClick={() => setIsContactOpen(false)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <div className={styles.contactLeft}>
+            <h2 className={styles.contactTitle}>Get in Touch</h2>
+            <p className={styles.contactSubtitle}>Our dedicated support team is here to help you with your travel arrangements 24/7.</p>
+
+            <div className={styles.contactMethodRow}>
+              <div className={styles.contactMethodIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path>
+                </svg>
+              </div>
+              <div className={styles.contactMethodInfo}>
+                <div className={styles.contactMethodLabel}>Global Support Phone</div>
+                <div className={styles.contactMethodValue}>+1 (800) 555-0199</div>
+              </div>
+            </div>
+
+            <div className={styles.contactMethodRow}>
+              <div className={styles.contactMethodIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path>
+                </svg>
+              </div>
+              <div className={styles.contactMethodInfo}>
+                <div className={styles.contactMethodLabel}>VIP Support Line</div>
+                <div className={styles.contactMethodValue}>+1 (800) 555-0299</div>
+              </div>
+            </div>
+
+            <div className={styles.contactMethodRow}>
+              <div className={styles.contactMethodIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
+              <div className={styles.contactMethodInfo}>
+                <div className={styles.contactMethodLabel}>Email Support</div>
+                <div className={styles.contactMethodValue}>support@isatravel.com</div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.contactRight}>
+            <div className={styles.chatHeader}>
+              <h2 className={styles.chatTitle}>AI Assistant</h2>
+              <p className={styles.chatSubtitle}>Get instant answers to your questions and travel advice</p>
+            </div>
+
+            <div className={styles.chatWindow}>
+              <div className={styles.chatMessages}>
+                <div className={`${styles.chatMessage} ${styles.chatMessageBot}`}>
+                  Hello! I&apos;m your ISA travel assistant. How can I help you today?
+                </div>
+                <div className={`${styles.chatMessage} ${styles.chatMessageUser}`}>
+                  I&apos;m interested in booking travel for an upcoming tournament.
+                </div>
+                <div className={`${styles.chatMessage} ${styles.chatMessageBot}`}>
+                  I&apos;d be happy to help! You can start by clicking &quot;Start Booking&quot; on the homepage, or sign in to your member portal for a more personalized experience. Would you like me to guide you?
+                </div>
+              </div>
+              <div className={styles.chatInputArea}>
+                <input type="text" className={styles.chatInput} placeholder="Type your message..." />
+                <button className={styles.sendBtn}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }

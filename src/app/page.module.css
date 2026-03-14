@@ -1,0 +1,709 @@
+.main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 40px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.logoContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 24px;
+    color: var(--isa-black);
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.logo span {
+    color: var(--isa-red);
+}
+
+.poweredBy {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--isa-charcoal);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    font-family: var(--font-sans);
+}
+
+.hero {
+    display: flex;
+    width: 100vw;
+    min-height: 100vh;
+    background: white;
+}
+
+.heroLeft {
+    width: 50%;
+    padding: 140px 80px 80px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+    z-index: 2;
+}
+
+.heroRight {
+    width: 50%;
+    position: relative;
+    background: var(--isa-charcoal);
+    z-index: 1;
+}
+
+.heroRight::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 40%), linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+    pointer-events: none;
+}
+
+.textContent {
+    max-width: 600px;
+}
+
+.floatingStampLogo {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    width: 140px;
+    height: auto;
+    z-index: 10;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floatingStampLogo:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.heroTitle {
+    font-size: 5.5rem;
+    font-weight: 900;
+    font-family: var(--font-heading);
+    line-height: 0.95;
+    color: var(--isa-red);
+    margin-bottom: 24px;
+    letter-spacing: -0.03em;
+}
+
+.heroTitle span {
+    color: white;
+    background: var(--isa-black);
+    padding: 2px 10px;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.heroSubtitle {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--isa-charcoal);
+    margin-bottom: 40px;
+    max-width: 500px;
+}
+
+/* Booking Panel */
+.bookingPanel {
+    width: 100%;
+    max-width: 580px;
+    background: white;
+    border-top: 4px solid var(--isa-red);
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    padding: 40px;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.panelTitle {
+    font-size: 2rem;
+    color: var(--isa-black);
+    font-family: var(--font-heading);
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputGroup {
+    margin-bottom: 24px;
+}
+
+.inputLabel {
+    display: block;
+    font-weight: 600;
+    color: var(--isa-charcoal);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.loginInput {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #f9f9f9;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+    color: var(--isa-black);
+}
+
+.loginInput:focus {
+    background: white;
+    border-color: var(--isa-red);
+    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.divider span {
+    position: relative;
+    z-index: 2;
+    background: white;
+    padding: 0 15px;
+    color: rgba(0, 0, 0, 0.4);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+/* Custom Toggle */
+.toggleSwitch {
+    position: relative;
+    width: 60px;
+    height: 32px;
+    background: #e0e0e0;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.toggleSwitch.active {
+    background: var(--isa-red);
+}
+
+.toggleThumb {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggleSwitch.active .toggleThumb {
+    transform: translateX(28px);
+}
+
+/* Support Button */
+.supportBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: var(--isa-black);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-sans);
+}
+
+.supportBtn:hover {
+    background: var(--isa-black);
+    color: white;
+    border-color: var(--isa-black);
+}
+
+.supportBtnText {
+    display: inline;
+}
+
+/* Contact Overlay */
+.contactOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 1000;
+    display: flex;
+    overflow: hidden;
+    animation: overlaySlideUp 0.3s ease-out forwards;
+}
+
+@keyframes overlaySlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contactLeft {
+    flex: 1;
+    padding: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #fdfdfd;
+}
+
+.contactRight {
+    flex: 1;
+    padding: 64px;
+    background: #f6f7f9;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.closeOverlayBtn {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    z-index: 1001;
+}
+
+.closeOverlayBtn:hover {
+    transform: scale(1.05);
+    background: var(--isa-black);
+    color: white;
+}
+
+.contactTitle {
+    font-size: 3rem;
+    font-family: var(--font-heading);
+    color: var(--isa-black);
+    margin-bottom: 16px;
+    line-height: 1.1;
+}
+
+.contactSubtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 48px;
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+.contactMethodRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: white;
+    border-radius: 0;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s;
+}
+
+.contactMethodRow:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.contactMethodIcon {
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--isa-black);
+    flex-shrink: 0;
+}
+
+.contactMethodInfo {
+    flex: 1;
+}
+
+.contactMethodLabel {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.contactMethodValue {
+    font-size: 1.1rem;
+    color: var(--isa-black);
+    font-weight: 500;
+}
+
+.chatHeader {
+    margin-bottom: 32px;
+}
+
+.chatTitle {
+    font-size: 2rem;
+    font-family: var(--font-heading);
+    color: var(--isa-black);
+    margin-bottom: 8px;
+}
+
+.chatSubtitle {
+    color: #666;
+}
+
+.chatWindow {
+    flex: 1;
+    background: white;
+    border-radius: 0;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chatMessages {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chatMessage {
+    max-width: 80%;
+    padding: 16px;
+    border-radius: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.chatMessageBot {
+    background: #f6f7f9;
+    color: var(--isa-black);
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+}
+
+.chatMessageUser {
+    background: var(--isa-black);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+}
+
+.chatInputArea {
+    padding: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 12px;
+}
+
+.chatInput {
+    flex: 1;
+    padding: 16px;
+    background: #f6f7f9;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.chatInput:focus {
+    background: white;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.sendBtn {
+    width: 52px;
+    height: 52px;
+    background: var(--isa-black);
+    color: white;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sendBtn:hover {
+    background: var(--isa-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.2);
+}
+
+@media (max-width: 1024px) {
+    .hero {
+        flex-direction: column;
+    }
+
+    .heroLeft,
+    .heroRight {
+        width: 100%;
+    }
+
+    .heroRight {
+        display: none;
+    }
+
+    .heroLeft {
+        padding: 140px 40px 60px;
+        min-height: 100vh;
+        min-height: 100dvh;
+        position: relative;
+        background-image: url('/hero-bg.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .heroLeft::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.92);
+        z-index: 0;
+    }
+
+    .heroLeft>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header {
+        padding: 24px;
+    }
+
+    .textContent {
+        margin-bottom: 60px;
+    }
+
+    .heroTitle {
+        font-size: 3.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 1.1rem;
+    }
+
+    .bookingPanel {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .floatingStampLogo {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 80px;
+        z-index: 10;
+        opacity: 0.6;
+    }
+
+    .supportBtnText {
+        display: none;
+    }
+
+    .supportBtn {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+    }
+
+    .contactOverlay {
+        flex-direction: column;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: 100dvh;
+        position: fixed;
+    }
+
+    .closeOverlayBtn {
+        top: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        position: fixed;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .contactLeft {
+        padding: 84px 24px 32px 24px;
+        flex: 0 0 auto;
+    }
+
+    .contactTitle {
+        font-size: 2.4rem;
+    }
+
+    .contactSubtitle {
+        font-size: 1rem;
+        margin-bottom: 32px;
+    }
+
+    .contactMethodRow {
+        padding: 16px;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .contactMethodIcon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .contactMethodIcon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .contactMethodValue {
+        font-size: 1rem;
+        word-break: break-word;
+    }
+
+    .contactRight {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 20px 16px;
+    }
+
+    .heroLeft {
+        padding: 100px 20px 40px;
+    }
+
+    .heroTitle {
+        font-size: 2.6rem;
+        margin-bottom: 16px;
+    }
+
+    .heroTitle span {
+        margin-top: 8px;
+        padding: 2px 8px;
+        font-size: 0.95em;
+    }
+
+    .heroSubtitle {
+        font-size: 1rem;
+        margin-bottom: 32px;
+        line-height: 1.5;
+    }
+
+    .inputGroup {
+        margin-bottom: 16px;
+    }
+
+    .loginInput {
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    .inputLabel {
+        font-size: 0.8rem;
+    }
+
+    .divider {
+        margin: 24px 0;
+    }
+
+    .bookingPanel {
+        padding: 24px;
+    }
+
+    .panelTitle {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+
+    .contactLeft {
+        padding: 84px 20px 32px 20px;
+    }
+
+    .contactRight {
+        padding: 0 20px 40px 20px;
+    }
+}

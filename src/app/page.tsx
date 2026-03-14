@@ -41,11 +41,11 @@ export default function Home() {
           {view === 'initial' ? (
             <div className={styles.textContent} style={{ animation: 'fadeIn 0.4s ease forwards' }}>
               <h1 className={styles.heroTitle}>
-                GLOBAL SPORTS<br />
-                <span>OPERATED AT SCALE.</span>
+                WHEREVER THE GAME<br />
+                <span>TAKES YOU.</span>
               </h1>
               <p className={styles.heroSubtitle}>
-                International travel coordination, multi-event schedules, and premium logistics support for athletes and families. Verified pathways.
+                Seamless travel logistics, premium accommodations, and high-performance transportation for athletes, teams, and their families worldwide.
               </p>
               <button
                 onClick={() => setView('signin')}

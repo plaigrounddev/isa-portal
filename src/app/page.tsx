@@ -71,6 +71,7 @@ export default function Home() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authLoading) return;
     setSignInError('');
     setAuthLoading(true);
     try {
@@ -204,7 +205,7 @@ export default function Home() {
               <p style={{ color: '#666', marginBottom: '32px', lineHeight: 1.6, fontSize: '1.1rem' }}>
                 Welcome to ISA Travel, <strong>{signupData.firstName}</strong>. Your portal is ready — you can now book flights, manage travelers, and coordinate your team&apos;s travel.
               </p>
-              <button className="geometric-btn" style={{ width: '100%', marginBottom: '16px' }} onClick={() => router.push('/dashboard')}>
+              <button className="geometric-btn" style={{ width: '100%', marginBottom: '16px' }} onClick={() => router.push('/portal')}>
                 Enter My Portal
               </button>
               <button className="geometric-btn geometric-btn-secondary" style={{ width: '100%' }} onClick={() => router.push('/booking')}>

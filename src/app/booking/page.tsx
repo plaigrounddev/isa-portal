@@ -1539,8 +1539,7 @@ function BookingInner() {
                         <p className={styles.optionDesc} style={{ fontSize: '0.95rem', marginBottom: '40px', color: '#888' }}>
                             A confirmation email has been sent to {travelers[0]?.email}. Our CTMS agents are finalizing your itinerary.
                         </p>
-                        <button className="geometric-btn" onClick={() => router.push('/portal')} style={{ width: '100%', marginBottom: '16px' }}>Go to Portal</button>
-                        <button className="geometric-btn geometric-btn-secondary" onClick={() => router.push('/portal')} style={{ width: '100%' }}>Back to Dashboard</button>
+                        <button className="geometric-btn" onClick={() => router.push('/portal')} style={{ width: '100%' }}>Go to Dashboard</button>
                     </div>
                 );
         }
@@ -1549,12 +1548,10 @@ function BookingInner() {
     return (
         <main className={styles.bookingLayout}>
             <header className={styles.header}>
-                <div onClick={() => router.push('/portal')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '1.2rem', color: 'var(--isa-black)' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    RETURN
-                </div>
+                <button className={styles.returnBtn} onClick={() => router.push('/portal')}>
+                    <ArrowLeft size={20} strokeWidth={2} />
+                    <span>Back</span>
+                </button>
             </header>
             <div className={styles.bookingContent}>
                 {renderStep()}

@@ -27,6 +27,25 @@
     color: var(--isa-red);
 }
 
+.returnBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--isa-charcoal);
+    cursor: pointer;
+    padding: 10px 16px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-family: var(--font-sans);
+}
+
+.returnBtn:hover {
+    color: var(--isa-red);
+    background: rgba(230, 57, 70, 0.04);
+}
+
 .bookingContent {
     flex: 1;
     display: flex;
@@ -58,6 +77,7 @@
     letter-spacing: 2px;
     color: var(--isa-red);
     margin-bottom: 16px;
+    text-transform: uppercase;
 }
 
 .question {
@@ -67,6 +87,7 @@
     line-height: 1.2;
     margin-bottom: 40px;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .inputField {
@@ -82,11 +103,10 @@
     font-family: var(--font-sans);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     width: 100%;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
 }
 
-.inputField::placeholder { color: #a0a0a0; }
-.inputField:focus { border-color: rgba(0, 0, 0, 0.15); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); }
+.inputField::placeholder { color: #bbb; }
+.inputField:focus { border-color: var(--isa-red); box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.06); }
 
 .errorText {
     color: var(--isa-red);
@@ -228,7 +248,7 @@
     outline: none;
     font-family: var(--font-sans);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+
 }
 
 .airportInput::placeholder { color: #a0a0a0; }
@@ -1026,7 +1046,7 @@
     cursor: pointer;
     font-weight: 500;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+
     position: relative;
     font-family: var(--font-sans);
 }
@@ -1177,7 +1197,7 @@
 }
 
 .calendarDay:hover { background: #f0f0f0; }
-.calendarDaySelected { background: #007AFF !important; color: white !important; }
+.calendarDaySelected { background: var(--isa-red) !important; color: white !important; }
 .calendarDayDisabled { color: #ccc; cursor: not-allowed; text-decoration: line-through; }
 .calendarDayDisabled:hover { background: transparent; }
 
@@ -1192,9 +1212,9 @@
 .calendarFooterBtn {
     background: transparent;
     border: none;
-    color: #007AFF;
+    color: var(--isa-red);
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
 }
 

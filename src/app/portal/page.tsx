@@ -1565,12 +1565,11 @@ export default function Portal() {
                             <h1 className={styles.pageTitle}>Invoices</h1>
                             <p className={styles.pageSubtitle}>View past transactions, download receipts, and manage billing securely.</p>
                         </div>
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ textAlign: 'center', color: '#888', maxWidth: '400px' }}>
-                                <FileText size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No Invoices Yet</h3>
-                                <p style={{ lineHeight: 1.5 }}>Invoices and receipts will appear here automatically after you complete a booking.</p>
-                            </div>
+                        <div className={styles.emptyStateCard}>
+                            <FileText size={44} strokeWidth={1} />
+                            <h3>No Invoices Yet</h3>
+                            <p>Invoices and receipts will appear here automatically after you complete a booking.</p>
+                            <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem', marginTop: '8px' }} onClick={() => setActiveTab('hotels')}>Book a Stay</button>
                         </div>
                     </div>
                 );
@@ -1634,6 +1633,15 @@ export default function Portal() {
                     {renderContent()}
                 </div>
             </div>
+
+            {/* Mobile Bottom Nav */}
+            <nav className={styles.mobileNav}>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'overview' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('overview')}><LayoutGrid size={20} /><span>Home</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'flights' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('flights')}><Plane size={20} /><span>Flights</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'hotels' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('hotels')}><Hotel size={20} /><span>Hotels</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'travelers' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('travelers')}><Users size={20} /><span>Travelers</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'itineraries' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('itineraries')}><FileText size={20} /><span>Trips</span></button>
+            </nav>
 
             {detailHotel && (
                 <HotelDetailModal

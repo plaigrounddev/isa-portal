@@ -22,7 +22,6 @@ import {
     Star,
     Coffee,
     ShieldCheck,
-    ArrowLeft,
 } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import styles from './portal.module.css';
@@ -757,7 +756,7 @@ export default function Portal() {
 
     const handleBookFlight = () => {
         if (selectedFlight) {
-            sessionStorage.setItem('selected_flight', JSON.stringify(selectedFlight));
+            try { sessionStorage.setItem('selected_flight', JSON.stringify(selectedFlight)); } catch { /* storage unavailable */ }
             router.push('/booking');
         }
     };

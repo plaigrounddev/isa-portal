@@ -179,43 +179,78 @@ function parseFareNexusResponse(data: Record<string, unknown>): ParsedFlight[] {
 function parseLiteApiResponse(data: Record<string, unknown>): ParsedHotel[] {
     const hotels: ParsedHotel[] = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawHotels: any[] =
-        (data.data as unknown[]) ??
-        ((data.data as Record<string, unknown>)?.hotels as unknown[]) ??
-        [];
+    const rawHotels: any[] = (data.data as unknown[]) ?? [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hotelMeta: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (Array.isArray((data as any).hotels)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const h of (data as any).hotels) hotelMeta[h.id] = h;
+    }
 
     if (!Array.isArray(rawHotels)) return hotels;
 
     for (const h of rawHotels) {
         if (!h) continue;
+        const meta = hotelMeta[h.hotelId] || {};
+        const roomTypes = h.roomTypes ?? [];
+
+        if (Array.isArray(roomTypes) && roomTypes.length > 0) {
+            let cheapestPrice = Infinity;
+            let currency = 'USD';
+            let hasBreakfast = false;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const rt of roomTypes as any[]) {
+                const offer = rt.offerRetailRate;
+                if (offer) {
+                    const amt = typeof offer === 'object' && !Array.isArray(offer)
+                        ? offer.amount : Array.isArray(offer) ? offer[0]?.amount : null;
+                    if (amt && amt < cheapestPrice) {
+                        cheapestPrice = amt;
+                        currency = (typeof offer === 'object' && !Array.isArray(offer))
+                            ? offer.currency || 'USD' : Array.isArray(offer) ? offer[0]?.currency || 'USD' : 'USD';
+                    }
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (rt.rates?.some((r: any) => r.boardType === 'BB' || r.boardType === 'BI')) hasBreakfast = true;
+            }
+
+            hotels.push({
+                hotelId: h.hotelId ?? '',
+                name: meta.name ?? h.hotelId ?? 'Hotel',
+                stars: meta.rating ?? meta.starRating ?? 0,
+                address: meta.address ?? '',
+                image: meta.main_photo ?? '',
+                offerId: h.hotelId,
+                roomName: `${roomTypes.length} room type${roomTypes.length !== 1 ? 's' : ''}`,
+                price: cheapestPrice === Infinity ? 0 : cheapestPrice,
+                currency,
+                boardType: hasBreakfast ? 'BB' : 'RO',
+            });
+            continue;
+        }
+
+        // Fallback for flat rates format
         const rates = h.rates ?? h.offers ?? [];
         if (!Array.isArray(rates) || rates.length === 0) continue;
-
         const rate = rates[0];
         const offerId = rate.offerId ?? rate.offer_id ?? rate.id ?? '';
         if (!offerId) continue;
-
         const retailRate = rate.retailRate ?? rate.rate ?? {};
         const totalArr = retailRate.total ?? [];
         const priceObj = Array.isArray(totalArr) ? totalArr[0] : totalArr;
-        let price = parseFloat(priceObj?.amount ?? rate.price ?? rate.totalPrice ?? '0');
+        let price = parseFloat(priceObj?.amount ?? rate.price ?? '0');
         if (isNaN(price)) price = 0;
-        const currency = priceObj?.currency ?? rate.currency ?? 'USD';
-
+        const curr = priceObj?.currency ?? rate.currency ?? 'USD';
         const addr = h.address ?? {};
         const addressStr = typeof addr === 'string' ? addr : [addr.line1, addr.cityName].filter(Boolean).join(', ');
 
         hotels.push({
-            hotelId: h.hotelId ?? h.id ?? '',
-            name: h.name ?? 'Hotel',
-            stars: h.starRating ?? h.stars ?? 0,
-            address: addressStr,
-            image: h.main_photo ?? h.mainPhoto ?? h.image ?? h.thumbnail ?? '',
-            offerId,
-            roomName: rate.name ?? rate.roomName ?? 'Standard Room',
-            price,
-            currency,
-            boardType: rate.boardType ?? rate.board_type ?? 'RO',
+            hotelId: h.hotelId ?? '', name: h.name ?? meta.name ?? 'Hotel',
+            stars: h.starRating ?? meta.rating ?? 0, address: addressStr,
+            image: h.main_photo ?? meta.main_photo ?? '',
+            offerId, roomName: rate.name ?? 'Standard Room',
+            price, currency: curr, boardType: rate.boardType ?? 'RO',
         });
     }
 

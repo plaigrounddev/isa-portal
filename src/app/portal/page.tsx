@@ -570,6 +570,17 @@ export default function Portal() {
     const [user, setUser] = useState<UserAccount | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
 
+    // Itineraries
+    interface Itinerary {
+        id: string;
+        createdAt: string;
+        status: string;
+        travelers: string[];
+        flight: { origin: string; destination: string; carrier: string; departDate: string; returnDate: string; price: number; currency: string } | null;
+        hotel: { name: string; checkin: string; checkout: string; price: number; currency: string } | null;
+    }
+    const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+
     // Travelers
     const [travelers, setTravelers] = useState<Traveler[]>([]);
     const [isAddingTraveler, setIsAddingTraveler] = useState(false);
@@ -595,6 +606,8 @@ export default function Portal() {
             }
             const rawT = localStorage.getItem('isa_travelers');
             if (rawT) setTravelers(JSON.parse(rawT));
+            const rawI = localStorage.getItem('isa_itineraries');
+            if (rawI) setItineraries(JSON.parse(rawI));
         } catch { /* ignore */ }
     }, []);
 
@@ -678,6 +691,7 @@ export default function Portal() {
         if (typeof window !== 'undefined') {
             localStorage.removeItem('isa_user');
             localStorage.removeItem('isa_travelers');
+            localStorage.removeItem('isa_itineraries');
             try { sessionStorage.clear(); } catch { /* */ }
         }
         router.push('/');
@@ -852,7 +866,7 @@ export default function Portal() {
 
                         <div className={styles.welcomeSection}>
                             <h1 className={styles.pageTitle}>Dashboard</h1>
-                            <p className={styles.pageSubtitle}>Welcome back, {user?.firstName || 'there'}. {travelers.length > 0 ? `You have ${travelers.length} traveler${travelers.length !== 1 ? 's' : ''} on your profile.` : 'Get started by adding travelers and booking your first trip.'}</p>
+                            <p className={styles.pageSubtitle}>Welcome back, {user?.firstName || 'there'}. {itineraries.length > 0 ? `You have ${itineraries.length} booked trip${itineraries.length !== 1 ? 's' : ''} and ${travelers.length} traveler${travelers.length !== 1 ? 's' : ''}.` : travelers.length > 0 ? `You have ${travelers.length} traveler${travelers.length !== 1 ? 's' : ''} on your profile.` : 'Get started by adding travelers and booking your first trip.'}</p>
                         </div>
 
                         <div className={`${styles.card} ${styles.cardFull}`} style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
@@ -878,19 +892,44 @@ export default function Portal() {
 
                         <div className={`${styles.card} ${styles.cardFull}`}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>Upcoming Itineraries</h2>
+                                <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>Itineraries</h2>
+                                {itineraries.length > 0 && <a href="#" className={styles.viewAllLink} onClick={(e) => { e.preventDefault(); setActiveTab('itineraries'); }}>View All</a>}
                             </div>
-                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
-                                <Plane size={40} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-                                <h3 style={{ fontSize: '1.1rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No upcoming trips yet</h3>
-                                <p style={{ fontSize: '0.9rem', marginBottom: '24px', maxWidth: '360px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-                                    Book a flight or full trip to see your itineraries here.
-                                </p>
-                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                    <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => setActiveTab('flights')}>Search Flights</button>
-                                    <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>Full Booking</button>
+                            {itineraries.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                                    <Plane size={40} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                    <h3 style={{ fontSize: '1.1rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No trips yet</h3>
+                                    <p style={{ fontSize: '0.9rem', marginBottom: '24px', maxWidth: '360px', margin: '0 auto 24px', lineHeight: 1.5 }}>
+                                        Book a flight or full trip to see your itineraries here.
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                        <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => setActiveTab('flights')}>Search Flights</button>
+                                        <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>Full Booking</button>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className={styles.itineraryList}>
+                                    {itineraries.slice(0, 3).map(itin => (
+                                        <div key={itin.id} className={styles.itineraryCard}>
+                                            <div className={styles.eventDetails}>
+                                                <div className={styles.eventTitle}>
+                                                    {itin.flight ? `${itin.flight.origin} → ${itin.flight.destination}` : 'Trip'}
+                                                    {itin.hotel ? ` + ${itin.hotel.name.substring(0, 25)}` : ''}
+                                                </div>
+                                                <div className={styles.eventLoc}>
+                                                    {itin.flight?.departDate ? new Date(itin.flight.departDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                                                    {itin.flight?.returnDate ? ` – ${new Date(itin.flight.returnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                                                    {itin.travelers.length > 0 ? ` • ${itin.travelers.join(', ')}` : ''}
+                                                </div>
+                                            </div>
+                                            <div className={styles.serviceStatusRow}>
+                                                {itin.flight && <span className={`${styles.statusPill} ${styles.statusSuccess}`}><Plane size={14} /> Booked</span>}
+                                                {itin.hotel && <span className={`${styles.statusPill} ${styles.statusSuccess}`}><Hotel size={14} /> Booked</span>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.card}>
@@ -1294,18 +1333,53 @@ export default function Portal() {
                     <div className={styles.tabContentBlock}>
                         <div className={styles.welcomeSection}>
                             <h1 className={styles.pageTitle}>Itineraries</h1>
-                            <p className={styles.pageSubtitle}>Review and manage your active and past trips.</p>
+                            <p className={styles.pageSubtitle}>{itineraries.length > 0 ? `You have ${itineraries.length} booked trip${itineraries.length !== 1 ? 's' : ''}.` : 'Review and manage your active and past trips.'}</p>
                         </div>
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ textAlign: 'center', color: '#888', maxWidth: '400px' }}>
-                                <Plane size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No Itineraries Yet</h3>
-                                <p style={{ lineHeight: 1.5, marginBottom: '24px' }}>Once you book a trip, your full itinerary — flights, hotels, and ground transport — will appear here.</p>
-                                <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>
-                                    Book Your First Trip
-                                </button>
+                        {itineraries.length === 0 ? (
+                            <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ textAlign: 'center', color: '#888', maxWidth: '400px' }}>
+                                    <Plane size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                    <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No Itineraries Yet</h3>
+                                    <p style={{ lineHeight: 1.5, marginBottom: '24px' }}>Once you book a trip, your full itinerary — flights, hotels, and ground transport — will appear here.</p>
+                                    <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>Book Your First Trip</button>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className={`${styles.card} ${styles.cardFull}`}>
+                                <div className={styles.itineraryList}>
+                                    {itineraries.map(itin => (
+                                        <div key={itin.id} className={styles.itineraryCard}>
+                                            <div className={styles.eventDetails}>
+                                                <div className={styles.eventTitle}>
+                                                    {itin.flight ? `${itin.flight.origin} → ${itin.flight.destination}` : 'Trip'}
+                                                    {itin.hotel ? ` + ${itin.hotel.name.substring(0, 30)}` : ''}
+                                                </div>
+                                                <div className={styles.eventLoc}>
+                                                    {itin.flight?.departDate ? new Date(itin.flight.departDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                                                    {itin.flight?.returnDate ? ` – ${new Date(itin.flight.returnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '4px' }}>
+                                                    {itin.travelers.join(', ')}
+                                                    {itin.flight ? ` • ${itin.flight.carrier}` : ''}
+                                                </div>
+                                            </div>
+                                            <div className={styles.serviceStatusRow}>
+                                                {itin.flight && (
+                                                    <span className={`${styles.statusPill} ${styles.statusSuccess}`}>
+                                                        <Plane size={14} /> Flight {itin.flight.price > 0 ? `${itin.flight.currency === 'CAD' ? 'C' : ''}$${itin.flight.price.toFixed(0)}` : 'Booked'}
+                                                    </span>
+                                                )}
+                                                {itin.hotel && (
+                                                    <span className={`${styles.statusPill} ${styles.statusSuccess}`}>
+                                                        <Hotel size={14} /> Hotel {itin.hotel.price > 0 ? `$${itin.hotel.price.toFixed(0)}` : 'Booked'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             case 'travelers':

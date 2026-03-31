@@ -559,6 +559,8 @@ function BookingInner() {
     const [wantsHotel, setWantsHotel] = useState<boolean | null>(null);
     const [hotelCity, setHotelCity] = useState('');
     const [hotelCountry, setHotelCountry] = useState('US');
+    const [hotelCheckin, setHotelCheckin] = useState('');
+    const [hotelCheckout, setHotelCheckout] = useState('');
     const [hotelResults, setHotelResults] = useState<ParsedHotel[]>([]);
     const [selectedHotel, setSelectedHotel] = useState<ParsedHotel | null>(null);
     const [isSearchingHotels, setIsSearchingHotels] = useState(false);
@@ -676,6 +678,26 @@ function BookingInner() {
         }
     }, [step, bookingMode, adults, children, travelers.length]);
 
+    // Pre-fill hotel dates from flight dates
+    useEffect(() => {
+        if (step === 2 && wantsHotel === true) {
+            if (!hotelCheckin && departDate) setHotelCheckin(departDate);
+            if (!hotelCheckout) {
+                if (returnDate) setHotelCheckout(returnDate);
+                else if (departDate) {
+                    const d = new Date(departDate);
+                    d.setDate(d.getDate() + 3);
+                    setHotelCheckout(d.toISOString().split('T')[0]);
+                }
+            }
+        }
+    }, [step, wantsHotel, departDate, returnDate, hotelCheckin, hotelCheckout]);
+
+    // Clear hotel checkout if checkin moves past it
+    useEffect(() => {
+        if (hotelCheckin && hotelCheckout && hotelCheckout <= hotelCheckin) setHotelCheckout('');
+    }, [hotelCheckin, hotelCheckout]);
+
     // Auto-fill hotel city from destination
     useEffect(() => {
         if (destination && !hotelCity) {
@@ -722,6 +744,11 @@ function BookingInner() {
     };
 
     const searchHotels = async () => {
+        if (!hotelCheckin || !hotelCheckout || hotelCheckout <= hotelCheckin) {
+            setHotelError('Please select valid check-in and check-out dates.');
+            return;
+        }
+
         setIsSearchingHotels(true);
         setHotelError('');
         setHotelResults([]);
@@ -729,19 +756,12 @@ function BookingInner() {
         setHasSearchedHotels(true);
 
         try {
-            const checkin = departDate;
-            const checkout = returnDate || (() => {
-                const d = new Date(departDate);
-                d.setDate(d.getDate() + 1);
-                return d.toISOString().split('T')[0];
-            })();
-
             const res = await fetch('/api/hotels/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cityName: hotelCity, countryCode: hotelCountry,
-                    checkin, checkout, adults, rooms: 1, currency: 'USD',
+                    checkin: hotelCheckin, checkout: hotelCheckout, adults, rooms: 1, currency: 'USD',
                 }),
             });
 
@@ -818,6 +838,37 @@ function BookingInner() {
                         });
                     }
                 }
+            }
+
+            // Save itinerary to localStorage for the portal dashboard
+            if (typeof window !== 'undefined') {
+                try {
+                    const existing = JSON.parse(localStorage.getItem('isa_itineraries') || '[]');
+                    const newItinerary = {
+                        id: `itin-${Date.now()}`,
+                        createdAt: new Date().toISOString(),
+                        status: 'confirmed',
+                        travelers: travelers.map(t => `${t.firstName} ${t.lastName}`),
+                        flight: selectedFlight ? {
+                            origin: selectedFlight.outbound.departAirport,
+                            destination: selectedFlight.outbound.arriveAirport,
+                            carrier: selectedFlight.carrierName,
+                            departDate: selectedFlight.outbound.departDate || departDate,
+                            returnDate: selectedFlight.inbound?.departDate || returnDate || '',
+                            price: selectedFlight.price,
+                            currency: selectedFlight.currency,
+                        } : null,
+                        hotel: selectedHotel ? {
+                            name: selectedHotel.name,
+                            checkin: hotelCheckin,
+                            checkout: hotelCheckout,
+                            price: selectedHotel.price,
+                            currency: selectedHotel.currency,
+                        } : null,
+                    };
+                    existing.unshift(newItinerary);
+                    localStorage.setItem('isa_itineraries', JSON.stringify(existing));
+                } catch { /* */ }
             }
 
             setStep(5);
@@ -1188,7 +1239,6 @@ function BookingInner() {
 
                         {wantsHotel === true && (
                             <>
-                                {/* Hotel search form for refinement */}
                                 <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
                                     <div>
                                         <label className={styles.dateLabel}>City</label>
@@ -1199,10 +1249,21 @@ function BookingInner() {
                                         <input type="text" className={styles.inputField} value={hotelCountry} onChange={(e) => setHotelCountry(e.target.value)} placeholder="US" maxLength={2} style={{ marginBottom: 0 }} />
                                     </div>
                                 </div>
+                                <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
+                                    <div>
+                                        <label className={styles.dateLabel}>Check-in</label>
+                                        <CustomDatePicker value={hotelCheckin} onChange={setHotelCheckin} placeholder="mm/dd/yyyy" minDate={todayStr} />
+                                    </div>
+                                    <div>
+                                        <label className={styles.dateLabel}>Check-out</label>
+                                        <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="mm/dd/yyyy" minDate={hotelCheckin || todayStr} />
+                                    </div>
+                                </div>
 
-                                {!isSearchingHotels && !hasSearchedHotels && (
-                                    <button className="geometric-btn" onClick={searchHotels} style={{ width: '100%', marginBottom: '24px' }}>
-                                        Search Hotels
+                                {!isSearchingHotels && (
+                                    <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout}
+                                        style={{ width: '100%', marginBottom: '24px', opacity: (hotelCity && hotelCheckin && hotelCheckout) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout) ? 'auto' : 'none' }}>
+                                        {hasSearchedHotels ? 'Search Again' : 'Search Hotels'}
                                     </button>
                                 )}
 

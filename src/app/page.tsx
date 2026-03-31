@@ -26,6 +26,14 @@ export default function Home() {
   });
   const [signupError, setSignupError] = useState('');
 
+  const resetSignup = () => {
+    setSignupStep(1);
+    setSignupError('');
+    setSignupData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: '' });
+  };
+
+  // TODO: Replace with real authentication (NextAuth, Clerk, Supabase Auth, etc.)
+  // Current implementation is a simulated sign-in for MVP/demo purposes only.
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
     if (typeof window !== 'undefined') {
@@ -83,7 +91,7 @@ export default function Home() {
       return (
         <div className={styles.authContainer} style={{ animation: 'fadeIn 0.4s ease forwards', width: '100%', maxWidth: '500px' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
-            <button onClick={() => { if (signupStep > 1) setSignupStep(signupStep - 1); else setView('signin'); }} className="circle-arrow-btn" style={{ marginRight: '24px', transform: 'rotate(180deg)' }}>
+            <button onClick={() => { if (signupStep > 1) { setSignupStep(signupStep - 1); setSignupError(''); } else { resetSignup(); setView('signin'); } }} className="circle-arrow-btn" style={{ marginRight: '24px', transform: 'rotate(180deg)' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </button>
             <h2 className={styles.heroTitle} style={{ fontSize: '2.8rem', marginBottom: 0 }}>
@@ -123,9 +131,17 @@ export default function Home() {
           {signupStep === 2 && (
             <div className={styles.formContainer}>
               <p style={{ color: '#666', marginBottom: '28px', lineHeight: 1.6 }}>What best describes your role? This helps us personalize your experience.</p>
-              <div className={styles.roleGrid}>
+              <div className={styles.roleGrid} role="radiogroup" aria-label="Select your role">
                 {ROLE_OPTIONS.map(r => (
-                  <div key={r.value} className={`${styles.roleCard} ${signupData.role === r.value ? styles.roleCardSelected : ''}`} onClick={() => setSignupData({ ...signupData, role: r.value })}>
+                  <div
+                    key={r.value}
+                    role="radio"
+                    aria-checked={signupData.role === r.value}
+                    tabIndex={0}
+                    className={`${styles.roleCard} ${signupData.role === r.value ? styles.roleCardSelected : ''}`}
+                    onClick={() => setSignupData({ ...signupData, role: r.value })}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSignupData({ ...signupData, role: r.value }); } }}
+                  >
                     <div className={styles.roleCardTitle}>{r.label}</div>
                     <div className={styles.roleCardDesc}>{r.desc}</div>
                     {signupData.role === r.value && (

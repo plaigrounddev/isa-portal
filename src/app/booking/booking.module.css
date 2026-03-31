@@ -712,6 +712,104 @@
    TRAVELER DETAILS
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Saved Traveler Picker */
+.savedTravelerPicker {
+    margin-bottom: 24px;
+}
+
+.savedTravelerGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.savedTravelerChip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f6f7f9;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-sans);
+}
+
+.savedTravelerChip:hover {
+    background: #eef0f3;
+    border-color: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.savedTravelerAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(230, 57, 70, 0.1);
+    color: var(--isa-red);
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.savedTravelerName {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--isa-black);
+}
+
+.savedTravelerRole {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: capitalize;
+}
+
+.savedTravelerDivider {
+    position: relative;
+    text-align: center;
+    margin: 24px 0 8px;
+}
+
+.savedTravelerDivider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.savedTravelerDivider span {
+    position: relative;
+    z-index: 1;
+    background: white;
+    padding: 0 16px;
+    color: #aaa;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.clearTravelerBtn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #999;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: color 0.2s;
+    padding: 4px 8px;
+}
+
+.clearTravelerBtn:hover {
+    color: var(--isa-red);
+}
+
 .travelerBlock {
     padding: 28px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -1170,6 +1268,8 @@
     /* Traveler details mobile */
     .dobRow { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .genderRow { flex-direction: row; }
+    .savedTravelerGrid { flex-direction: column; }
+    .savedTravelerChip { width: 100%; }
 
     /* Review mobile */
     .reviewRow { flex-direction: column; align-items: flex-start; gap: 4px; }

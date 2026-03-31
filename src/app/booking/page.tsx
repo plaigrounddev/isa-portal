@@ -569,6 +569,20 @@ function BookingInner() {
     const [isBooking, setIsBooking] = useState(false);
     const [bookingError, setBookingError] = useState('');
 
+    interface SavedTraveler {
+        id: string; firstName: string; lastName: string; role: string;
+        dateOfBirth: string; gender: string; email: string; phone: string; nationality: string;
+    }
+    const [savedTravelers, setSavedTravelers] = useState<SavedTraveler[]>([]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = localStorage.getItem('isa_travelers');
+            if (raw) setSavedTravelers(JSON.parse(raw));
+        } catch { /* */ }
+    }, []);
+
     // ── Agent-assisted state ───────────────────────────────────────────────
     const [agentForm, setAgentForm] = useState({
         name: '', email: '', phone: '', startDate: '', endDate: '', agentNotes: ''
@@ -812,6 +826,37 @@ function BookingInner() {
         } finally {
             setIsBooking(false);
         }
+    };
+
+    const applySavedTraveler = (index: number, saved: SavedTraveler) => {
+        const dob = saved.dateOfBirth || '';
+        let dobMonth = '', dobDay = '', dobYear = '';
+        if (dob.includes('-')) {
+            const parts = dob.split('-');
+            dobYear = parts[0] || '';
+            dobMonth = parts[1] || '';
+            dobDay = String(parseInt(parts[2] || '0') || '');
+        }
+        setTravelers(prev => {
+            const next = [...prev];
+            next[index] = {
+                firstName: saved.firstName || '',
+                lastName: saved.lastName || '',
+                gender: (saved.gender === 'M' || saved.gender === 'F') ? saved.gender : '',
+                dobMonth, dobDay, dobYear,
+                email: saved.email || '',
+                phone: saved.phone || '',
+            };
+            return next;
+        });
+    };
+
+    const clearTraveler = (index: number) => {
+        setTravelers(prev => {
+            const next = [...prev];
+            next[index] = { firstName: '', lastName: '', gender: '' as const, dobMonth: '', dobDay: '', dobYear: '', email: '', phone: '' };
+            return next;
+        });
     };
 
     const updateTraveler = (index: number, field: keyof TravelerInfo, value: string) => {
@@ -1242,11 +1287,44 @@ function BookingInner() {
                             </div>
                         )}
 
-                        <p className={styles.questionSub}>Enter details for {travelers.length} traveler{travelers.length !== 1 ? 's' : ''} as shown on government ID.</p>
+                        <p className={styles.questionSub}>
+                            {savedTravelers.length > 0
+                                ? 'Select from your saved travelers or enter details manually.'
+                                : `Enter details for ${travelers.length} traveler${travelers.length !== 1 ? 's' : ''} as shown on government ID.`}
+                        </p>
 
-                        {travelers.map((t, i) => (
+                        {travelers.map((t, i) => {
+                            const isFilled = !!(t.firstName && t.lastName);
+                            return (
                             <div key={i} className={styles.travelerBlock}>
-                                {travelers.length > 1 && <div className={styles.travelerLabel}>Traveler {i + 1} {i < adults ? '(Adult)' : '(Child)'}</div>}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <div className={styles.travelerLabel} style={{ marginBottom: 0 }}>
+                                        {travelers.length > 1 ? `Traveler ${i + 1} ${i < adults ? '(Adult)' : '(Child)'}` : 'Traveler'}
+                                    </div>
+                                    {isFilled && (
+                                        <button className={styles.clearTravelerBtn} onClick={() => clearTraveler(i)}>Clear</button>
+                                    )}
+                                </div>
+
+                                {/* Saved traveler picker */}
+                                {savedTravelers.length > 0 && !isFilled && (
+                                    <div className={styles.savedTravelerPicker}>
+                                        <label className={styles.dateLabel}>Select Saved Traveler</label>
+                                        <div className={styles.savedTravelerGrid}>
+                                            {savedTravelers.map(st => (
+                                                <button key={st.id} className={styles.savedTravelerChip} onClick={() => applySavedTraveler(i, st)}>
+                                                    <span className={styles.savedTravelerAvatar}>{(st.firstName?.[0] || '?').toUpperCase()}{(st.lastName?.[0] || '?').toUpperCase()}</span>
+                                                    <span className={styles.savedTravelerName}>{st.firstName} {st.lastName}</span>
+                                                    <span className={styles.savedTravelerRole}>{st.role}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className={styles.savedTravelerDivider}>
+                                            <span>or enter details manually</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className={styles.searchFormGrid}>
                                     <div><label className={styles.dateLabel}>First Name</label><input type="text" className={styles.inputField} placeholder="First name" value={t.firstName} onChange={(e) => updateTraveler(i, 'firstName', e.target.value)} style={{ marginBottom: 0 }} /></div>
                                     <div><label className={styles.dateLabel}>Last Name</label><input type="text" className={styles.inputField} placeholder="Last name" value={t.lastName} onChange={(e) => updateTraveler(i, 'lastName', e.target.value)} style={{ marginBottom: 0 }} /></div>
@@ -1273,7 +1351,8 @@ function BookingInner() {
                                     <div><label className={styles.dateLabel}>Phone</label><input type="tel" className={styles.inputField} placeholder="+1 (234) 567-8900" value={t.phone} onChange={(e) => updateTraveler(i, 'phone', formatPhoneNumber(e.target.value, t.phone))} style={{ marginBottom: 0 }} /></div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
 
                         <div className={styles.actions} style={{ marginTop: '32px' }}>
                             <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(2)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>

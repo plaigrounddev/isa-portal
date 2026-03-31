@@ -80,95 +80,97 @@ function parseFareNexusResponse(data: Record<string, unknown>): ParsedFlight[] {
     const flights: ParsedFlight[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const itineraries: any[] =
-        (data.pricedItineraries as unknown[]) ??
-        (data.data as { pricedItineraries?: unknown[] })?.pricedItineraries ??
-        (data.results as unknown[]) ??
-        (data.offers as unknown[]) ??
-        [];
+    const responseArr = data.response as any[];
 
-    if (!Array.isArray(itineraries)) return flights;
+    if (Array.isArray(responseArr) && responseArr.length > 0) {
+        const status = responseArr[0]?.status as Record<string, unknown> | undefined;
+        if (status && status.type === 'ERROR') return flights;
 
-    for (let i = 0; i < itineraries.length; i++) {
-        const itin = itineraries[i];
-        if (!itin) continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const itineraries = responseArr[0]?.sliceItinerary as any[];
+        if (Array.isArray(itineraries)) {
+            for (let i = 0; i < itineraries.length; i++) {
+                const itin = itineraries[i];
+                const reviewKey = (itin.reviewKey as string) || '';
 
-        const reviewKey = itin.reviewKey ?? itin.review_key ?? '';
-        if (!reviewKey) continue;
+                const pricingInfo = itin.pricingInfo as Record<string, unknown> | undefined;
+                const price = parseFloat(String(pricingInfo?.totalPrice ?? '0'));
+                const currency = (pricingInfo?.currencyCode as string) || 'CAD';
+                const pricingMeta = pricingInfo?.metaData as Record<string, unknown> | undefined;
+                const validatingCarrier = (pricingMeta?.validatingCarrier as string) || '';
 
-        // Parse price
-        const fare = itin.fare ?? itin.airItineraryPricingInfo ?? itin.pricing ?? {};
-        const totalFare = fare.totalFare ?? fare.total ?? fare;
-        let price = parseFloat(totalFare?.amount ?? totalFare?.totalPrice ?? totalFare?.price ?? itin.totalPrice ?? itin.price ?? '0');
-        const currency = totalFare?.currency ?? totalFare?.currencyCode ?? itin.currency ?? 'CAD';
-        if (isNaN(price)) price = 0;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const originDestInfoArr = itin.originDestinationInfo as any[];
+                const parsedLegs: ParsedLeg[] = [];
 
-        // Parse legs
-        const rawLegs =
-            itin.legs ??
-            itin.airItinerary?.originDestinationOptions ??
-            itin.itinerary?.legs ??
-            [];
+                if (Array.isArray(originDestInfoArr)) {
+                    for (const odi of originDestInfoArr) {
+                        const legSegments: ParsedSegment[] = [];
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const flightSegs = odi.flightSegmentInfo as any[];
 
-        const parsedLegs: ParsedLeg[] = [];
-        for (const rawLeg of (Array.isArray(rawLegs) ? rawLegs : [])) {
-            const segments: ParsedSegment[] = [];
-            const rawSegments = rawLeg.segments ?? rawLeg.flightSegments ?? [];
+                        if (Array.isArray(flightSegs)) {
+                            for (const seg of flightSegs) {
+                                const departure = seg.departure as Record<string, unknown> | undefined;
+                                const arrival = seg.arrival as Record<string, unknown> | undefined;
+                                const mc = seg.marketingCarrier as Record<string, unknown> | undefined;
+                                const depDT = (seg.departureDateTime as string) || '';
+                                const arrDT = (seg.arrivalDateTime as string) || '';
 
-            for (const seg of (Array.isArray(rawSegments) ? rawSegments : [])) {
-                const carrier = seg.airline ?? seg.marketingAirline?.code ?? seg.carrier ?? seg.airlineCode ?? '';
-                const info = getAirlineInfo(carrier);
-                segments.push({
-                    carrier,
-                    carrierName: info.name,
-                    flightNumber: seg.flightNumber ?? seg.flight_number ?? '',
-                    from: seg.departureAirport?.locationCode ?? seg.departureAirport ?? seg.from ?? '',
-                    to: seg.arrivalAirport?.locationCode ?? seg.arrivalAirport ?? seg.to ?? '',
-                    departTime: extractTime(seg.departureDateTime ?? seg.departureTime ?? seg.depart_time ?? ''),
-                    arriveTime: extractTime(seg.arrivalDateTime ?? seg.arrivalTime ?? seg.arrive_time ?? ''),
-                    departDate: extractDate(seg.departureDateTime ?? seg.departureDate ?? ''),
-                    arriveDate: extractDate(seg.arrivalDateTime ?? seg.arrivalDate ?? ''),
-                    cabin: seg.cabin ?? seg.cabinClass ?? '',
+                                legSegments.push({
+                                    carrier: (mc?.code as string) || '',
+                                    carrierName: (mc?.name as string) || '',
+                                    flightNumber: String(seg.flightNumber ?? ''),
+                                    from: (departure?.airportCode as string) || '',
+                                    to: (arrival?.airportCode as string) || '',
+                                    departTime: depDT.split('T')[1]?.slice(0, 5) || '',
+                                    arriveTime: arrDT.split('T')[1]?.slice(0, 5) || '',
+                                    departDate: depDT.split('T')[0] || '',
+                                    arriveDate: arrDT.split('T')[0] || '',
+                                    cabin: ((seg.cabin as Record<string, unknown>)?.cabinName as string) || 'Economy',
+                                });
+                            }
+                        }
+
+                        if (legSegments.length === 0) continue;
+                        const first = legSegments[0];
+                        const last = legSegments[legSegments.length - 1];
+                        const boundDuration = parseInt(String(odi.boundDuration ?? '0'));
+
+                        parsedLegs.push({
+                            segments: legSegments,
+                            departAirport: first.from,
+                            arriveAirport: last.to,
+                            departTime: first.departTime,
+                            arriveTime: last.arriveTime,
+                            departDate: first.departDate,
+                            arriveDate: last.arriveDate,
+                            duration: boundDuration > 0 ? `${Math.floor(boundDuration / 60)}h ${boundDuration % 60}m` : `${legSegments.length} seg`,
+                            stops: Math.max(0, legSegments.length - 1),
+                            carrier: first.carrier,
+                            carrierName: first.carrierName,
+                        });
+                    }
+                }
+
+                if (parsedLegs.length === 0) continue;
+                const mainCarrier = validatingCarrier || parsedLegs[0].carrier;
+                const mainInfo = getAirlineInfo(mainCarrier);
+
+                flights.push({
+                    id: `flight-${i}`,
+                    reviewKey,
+                    outbound: parsedLegs[0],
+                    inbound: parsedLegs.length > 1 ? parsedLegs[1] : undefined,
+                    price,
+                    currency,
+                    carrier: mainCarrier,
+                    carrierName: mainInfo.name,
+                    carrierLogo: getAirlineLogo(mainCarrier, 30),
                 });
             }
-
-            if (segments.length === 0) continue;
-
-            const firstSeg = segments[0];
-            const lastSeg = segments[segments.length - 1];
-            const legCarrier = firstSeg.carrier;
-
-            parsedLegs.push({
-                segments,
-                departAirport: rawLeg.departureAirport ?? firstSeg.from,
-                arriveAirport: rawLeg.arrivalAirport ?? lastSeg.to,
-                departTime: rawLeg.departureTime ? extractTime(rawLeg.departureTime) : firstSeg.departTime,
-                arriveTime: rawLeg.arrivalTime ? extractTime(rawLeg.arrivalTime) : lastSeg.arriveTime,
-                departDate: rawLeg.departureDate ? extractDate(rawLeg.departureDate) : firstSeg.departDate,
-                arriveDate: rawLeg.arrivalDate ? extractDate(rawLeg.arrivalDate) : lastSeg.arriveDate,
-                duration: rawLeg.duration ?? rawLeg.elapsedTime ?? calculateDuration(segments),
-                stops: rawLeg.stops ?? Math.max(0, segments.length - 1),
-                carrier: legCarrier,
-                carrierName: firstSeg.carrierName,
-            });
+            return flights.sort((a, b) => a.price - b.price);
         }
-
-        if (parsedLegs.length === 0) continue;
-
-        const mainCarrier = parsedLegs[0].carrier;
-        const mainInfo = getAirlineInfo(mainCarrier);
-
-        flights.push({
-            id: `flight-${i}`,
-            reviewKey,
-            outbound: parsedLegs[0],
-            inbound: parsedLegs.length > 1 ? parsedLegs[1] : undefined,
-            price,
-            currency,
-            carrier: mainCarrier,
-            carrierName: mainInfo.name,
-            carrierLogo: getAirlineLogo(mainCarrier, 30),
-        });
     }
 
     return flights;

@@ -3,10 +3,16 @@ import { prebookRate } from "@/lib/liteapi/hotels";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
     const { offerId } = body;
 
-    if (!offerId) {
+    if (!offerId || typeof offerId !== "string") {
       return NextResponse.json(
         { error: "offerId is required" },
         { status: 400 }
@@ -17,7 +23,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (err: unknown) {
     console.error("[/api/hotels/prebook]", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to prebook hotel rate" },
+      { status: 500 }
+    );
   }
 }

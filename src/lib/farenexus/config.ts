@@ -2,12 +2,16 @@
 // All config is pulled from environment variables.
 // Credentials are injected into each request body (no OAuth token flow).
 
+function requireEnv(key: string): string {
+  const val = process.env[key];
+  if (!val) throw new Error(`Missing required env var: ${key}`);
+  return val;
+}
+
 export const FARENEXUS_CONFIG = {
-  baseUrl:
-    process.env.FARENEXUS_BASE_URL ||
-    "https://a.uat.w.farenexushub.com",
-  clientId: process.env.FARENEXUS_CLIENT_ID || "2455883333",
-  agencyKey: process.env.FARENEXUS_AGENCY_KEY || "2453476089",
-  apiSource: process.env.FARENEXUS_API_SOURCE || "SABRE",
-  travelAgencyId: process.env.FARENEXUS_TRAVEL_AGENCY_ID || "1093",
+  get baseUrl() { return requireEnv("FARENEXUS_BASE_URL"); },
+  get clientId() { return requireEnv("FARENEXUS_CLIENT_ID"); },
+  get agencyKey() { return requireEnv("FARENEXUS_AGENCY_KEY"); },
+  get apiSource() { return requireEnv("FARENEXUS_API_SOURCE"); },
+  get travelAgencyId() { return requireEnv("FARENEXUS_TRAVEL_AGENCY_ID"); },
 } as const;

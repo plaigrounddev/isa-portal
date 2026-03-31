@@ -60,10 +60,9 @@ export async function farenexusRequest<T = unknown>(
   }
 
   if (!res.ok) {
-    const errorMsg = typeof data === "string" ? data : JSON.stringify(data);
-    throw new Error(
-      `FareNexus API error ${res.status} POST ${path}: ${errorMsg.slice(0, 500)}`
-    );
+    const errorDetail = typeof data === "string" ? data : JSON.stringify(data);
+    console.error(`FareNexus API error ${res.status} POST ${path}:`, errorDetail.slice(0, 500));
+    throw new Error(`FareNexus request failed (${res.status})`);
   }
 
   return data as T;

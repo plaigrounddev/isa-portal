@@ -90,6 +90,7 @@ export async function bookCar(params: {
         VehPref: {
           Code: params.vehicleType,
           VendorPref: { Code: params.vendorCode },
+          ...(params.rateCode ? { RateCode: params.rateCode } : {}),
         },
       },
     },

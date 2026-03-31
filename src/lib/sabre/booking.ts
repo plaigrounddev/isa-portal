@@ -10,6 +10,10 @@ import type { CreateBookingParams } from "./types";
  * POST /v2.5.0/passenger/records?mode=create
  */
 export async function createBooking(params: CreateBookingParams) {
+  if (!params.passengers?.length) {
+    throw new Error("At least one passenger is required");
+  }
+
   const passengers = params.passengers.map((p, i) => ({
     NameNumber: `${i + 1}.1`,
     GivenName: p.firstName,

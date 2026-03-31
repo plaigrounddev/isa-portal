@@ -3,11 +3,16 @@ import { reviewFlight } from "@/lib/farenexus/review";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
     const { reviewKey } = body;
 
-    if (!reviewKey) {
+    if (!reviewKey || typeof reviewKey !== "string") {
       return NextResponse.json(
         { error: "reviewKey is required" },
         { status: 400 }
@@ -15,11 +20,12 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await reviewFlight(reviewKey);
-
     return NextResponse.json(result);
   } catch (err: unknown) {
     console.error("[/api/farenexus/review]", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to review flight offer" },
+      { status: 500 }
+    );
   }
 }

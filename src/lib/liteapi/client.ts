@@ -33,11 +33,20 @@ export async function liteApiRequest<T = unknown>(
     Accept: "application/json",
   };
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    ...(body != null ? { body: JSON.stringify(body) } : {}),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      ...(body != null ? { body: JSON.stringify(body) } : {}),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   // Safely parse response — guard against empty or non-JSON bodies
   let data: unknown;
@@ -54,11 +63,12 @@ export async function liteApiRequest<T = unknown>(
   }
 
   if (!res.ok) {
-    const msg =
+    const detail =
       typeof (data as Record<string, unknown>)?.error === "string"
         ? (data as Record<string, string>).error
         : JSON.stringify(data);
-    throw new Error(`LiteAPI ${res.status}: ${msg}`);
+    console.error(`LiteAPI ${res.status} ${method} ${path}:`, detail);
+    throw new Error(`LiteAPI request failed (${res.status})`);
   }
 
   return data as T;

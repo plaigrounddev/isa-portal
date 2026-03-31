@@ -111,21 +111,22 @@ export interface BookParams {
   };
 }
 
-export async function bookRate(params: BookParams) {
+export async function bookRate(params: BookParams & { rooms?: number }) {
+  const roomCount = params.rooms ?? 1;
+  const guests = Array.from({ length: roomCount }, (_, i) => ({
+    occupancyNumber: i + 1,
+    remarks: "",
+    firstName: params.guestInfo.firstName,
+    lastName: params.guestInfo.lastName,
+  }));
+
   return liteApiRequest("/rates/book", {
     method: "POST",
     body: {
       prebookId: params.prebookId,
       holder: params.guestInfo,
       payment: params.payment,
-      guests: [
-        {
-          occupancyNumber: 1,
-          remarks: "",
-          firstName: params.guestInfo.firstName,
-          lastName: params.guestInfo.lastName,
-        },
-      ],
+      guests,
     },
     booking: true,
   });

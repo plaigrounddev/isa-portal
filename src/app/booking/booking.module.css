@@ -1079,7 +1079,7 @@
     .header { padding: 24px 20px; }
     .bookingContent { padding: 24px 20px 80px 20px; align-items: flex-start; }
     .stepContainer { padding: 0; }
-    .question { font-size: 1.8rem; margin-bottom: 24px; word-wrap: break-word; }
+    .question { font-size: 1.8rem; margin-bottom: 24px; overflow-wrap: break-word; }
 
     .inputField,
     .customSelectValue { font-size: 1rem; padding: 16px 20px; }

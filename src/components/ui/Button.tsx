@@ -16,7 +16,7 @@ export function Button({ variant = 'pill', icon, children, className = '', ...pr
             className={`${styles.base} ${styles[variant]} ${className}`}
             {...props}
         >
-            {!isIconOnly && <span className={styles.text}>{children}</span>}
+            {!isIconOnly && children}
             {icon && <span className={styles.icon}>{icon}</span>}
         </button>
     );

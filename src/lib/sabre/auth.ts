@@ -12,6 +12,7 @@ interface TokenCache {
 }
 
 let cache: TokenCache | null = null;
+let inFlightTokenRequest: Promise<TokenCache> | null = null;
 
 /** Request timeout in milliseconds (30s) */
 const AUTH_TIMEOUT_MS = 30_000;
@@ -63,10 +64,14 @@ async function fetchToken(): Promise<TokenCache> {
 
     const data = await res.json();
 
+    const expiresInSec = Number(data.expires_in);
+    const safeTtlSec = Number.isFinite(expiresInSec)
+      ? Math.max(expiresInSec - 60, 5)
+      : 300;
+
     return {
       accessToken: data.access_token,
-      // expires_in is in seconds – subtract 60s buffer
-      expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+      expiresAt: Date.now() + safeTtlSec * 1000,
     };
   } finally {
     clearTimeout(timeoutId);
@@ -81,7 +86,12 @@ export async function getToken(): Promise<string> {
   if (cache && Date.now() < cache.expiresAt) {
     return cache.accessToken;
   }
-  cache = await fetchToken();
+  if (!inFlightTokenRequest) {
+    inFlightTokenRequest = fetchToken().finally(() => {
+      inFlightTokenRequest = null;
+    });
+  }
+  cache = await inFlightTokenRequest;
   return cache.accessToken;
 }
 

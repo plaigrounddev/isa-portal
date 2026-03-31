@@ -28,7 +28,12 @@ export async function sabreRequest<T = unknown>(
     url += `?${qs}`;
   }
 
+  const REQUEST_TIMEOUT_MS = 30_000;
+
   const makeRequest = async (token: string): Promise<Response> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     const reqHeaders: Record<string, string> = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -36,11 +41,16 @@ export async function sabreRequest<T = unknown>(
       ...headers,
     };
 
-    return fetch(url, {
-      method,
-      headers: reqHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      return await fetch(url, {
+        method,
+        headers: reqHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
   };
 
   // First attempt
@@ -56,7 +66,8 @@ export async function sabreRequest<T = unknown>(
 
   if (!res.ok) {
     const errorBody = await res.text();
-    throw new Error(`Sabre API error ${res.status} ${method} ${path}: ${errorBody}`);
+    console.error(`Sabre API error ${res.status} ${method} ${path}:`, errorBody.slice(0, 500));
+    throw new Error(`Sabre request failed (${res.status})`);
   }
 
   return res.json() as Promise<T>;

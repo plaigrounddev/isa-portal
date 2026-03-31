@@ -6,18 +6,33 @@ import Image from 'next/image';
 
 function useAuth() {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    const isDev = process.env.NODE_ENV === 'development';
     // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-explicit-any
     const actions = convexUrl ? (require('@convex-dev/auth/react') as any).useAuthActions() : null;
 
-    const signInWithPassword = useCallback(async (email: string, password: string, flow: 'signIn' | 'signUp', name?: string) => {
+    const signInWithPassword = useCallback(async (
+        email: string, password: string, flow: 'signIn' | 'signUp',
+        profile?: { firstName?: string; lastName?: string; role?: string }
+    ) => {
         if (actions) {
-            await actions.signIn('password', { email, password, flow, ...(name ? { name } : {}) });
-        } else {
+            await actions.signIn('password', {
+                email, password, flow,
+                ...(profile?.firstName ? { name: `${profile.firstName} ${profile.lastName || ''}`.trim() } : {}),
+            });
+        } else if (isDev) {
             if (typeof window !== 'undefined') {
-                localStorage.setItem('isa_user', JSON.stringify({ firstName: name?.split(' ')[0] || 'User', lastName: name?.split(' ')[1] || '', email, role: 'parent', isNew: flow === 'signUp' }));
+                localStorage.setItem('isa_user', JSON.stringify({
+                    firstName: profile?.firstName || 'User',
+                    lastName: profile?.lastName || '',
+                    email,
+                    role: profile?.role || 'parent',
+                    isNew: flow === 'signUp',
+                }));
             }
+        } else {
+            throw new Error('Authentication service is not configured.');
         }
-    }, [actions]);
+    }, [actions, isDev]);
 
     return { signIn: signInWithPassword, isConvex: !!convexUrl };
 }
@@ -60,7 +75,7 @@ export default function Home() {
     setAuthLoading(true);
     try {
       await authSignIn(email, password, 'signIn');
-      router.push('/dashboard');
+      router.push('/portal');
     } catch {
       setSignInError('Invalid email or password. Please try again.');
     } finally {
@@ -73,6 +88,7 @@ export default function Home() {
   };
 
   const handleSignupNext = async () => {
+    if (authLoading) return;
     setSignupError('');
     if (signupStep === 1) {
       if (!signupData.firstName.trim() || !signupData.lastName.trim()) {
@@ -98,7 +114,7 @@ export default function Home() {
           signupData.email.trim(),
           signupData.password,
           'signUp',
-          `${signupData.firstName.trim()} ${signupData.lastName.trim()}`
+          { firstName: signupData.firstName.trim(), lastName: signupData.lastName.trim(), role: signupData.role }
         );
         setSignupStep(3);
       } catch {

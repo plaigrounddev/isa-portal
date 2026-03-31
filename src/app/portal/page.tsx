@@ -648,6 +648,10 @@ export default function Portal() {
     const [flightError, setFlightError] = useState('');
     const [hasSearchedFlights, setHasSearchedFlights] = useState(false);
     const [selectedFlight, setSelectedFlight] = useState<ParsedFlight | null>(null);
+    const [detailFlight, setDetailFlight] = useState<ParsedFlight | null>(null);
+    const [isReviewing, setIsReviewing] = useState(false);
+    const [filterStops, setFilterStops] = useState<'any' | 'nonstop' | 'one_stop'>('any');
+    const [filterAirline, setFilterAirline] = useState('');
 
     // ── Hotel search state ───────────────────────────────────────────────────
     const [hotelCity, setHotelCity] = useState('');
@@ -655,6 +659,7 @@ export default function Portal() {
     const [hotelCheckin, setHotelCheckin] = useState('');
     const [hotelCheckout, setHotelCheckout] = useState('');
     const [hotelAdults, setHotelAdults] = useState(2);
+    const [hotelRooms, setHotelRooms] = useState(1);
     const [hotelResults, setHotelResults] = useState<ParsedHotel[]>([]);
     const [isSearchingHotels, setIsSearchingHotels] = useState(false);
     const [hotelError, setHotelError] = useState('');
@@ -738,7 +743,7 @@ export default function Portal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cityName: searchCity, countryCode: searchCountry,
-                    checkin, checkout, adults: hotelAdults, rooms: 1,
+                    checkin, checkout, adults: hotelAdults, rooms: hotelRooms,
                 }),
             });
 
@@ -754,11 +759,48 @@ export default function Portal() {
         }
     }, [hotelCity, hotelCountry, hotelCheckin, hotelCheckout, hotelAdults]);
 
-    const handleBookFlight = () => {
-        if (selectedFlight) {
-            try { sessionStorage.setItem('selected_flight', JSON.stringify(selectedFlight)); } catch { /* storage unavailable */ }
+    // Filtered flights
+    const filteredFlights = flightResults.filter(f => {
+        if (filterStops === 'nonstop' && f.outbound.stops !== 0) return false;
+        if (filterStops === 'one_stop' && f.outbound.stops > 1) return false;
+        if (filterAirline && f.carrier !== filterAirline) return false;
+        return true;
+    });
+
+    const uniqueAirlines = Array.from(new Map(flightResults.map(f => [f.carrier, f.carrierName])).entries());
+
+    const handleBookFlight = async (flight?: ParsedFlight) => {
+        const target = flight || selectedFlight;
+        if (!target) return;
+        setIsReviewing(true);
+        try {
+            const reviewRes = await fetch('/api/farenexus/review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reviewKey: target.reviewKey }),
+            });
+            const reviewData = await reviewRes.json();
+            if (!reviewRes.ok) throw new Error(reviewData.error || 'Review failed');
+            const bookKey = reviewData.bookKey ?? reviewData.data?.bookKey ?? '';
+            const params = new URLSearchParams({
+                ...(bookKey ? { bookKey } : {}),
+                price: target.price.toFixed(2),
+                currency: target.currency,
+                origin: target.outbound.departAirport,
+                destination: target.outbound.arriveAirport,
+            });
+            router.push(`/booking?${params.toString()}`);
+        } catch {
+            try { sessionStorage.setItem('selected_flight', JSON.stringify(target)); } catch { /* */ }
             router.push('/booking');
+        } finally {
+            setIsReviewing(false);
         }
+    };
+
+    const calcNights = (checkin: string, checkout: string) => {
+        const a = new Date(checkin), b = new Date(checkout);
+        return Math.max(1, Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)));
     };
 
     const handleDestinationClick = (city: string, countryCode: string) => {
@@ -892,165 +934,119 @@ export default function Portal() {
                             <p className={styles.pageSubtitle}>Search real-time availability across airlines worldwide.</p>
                         </div>
 
+                        {/* Search Form */}
                         <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
                             <div className={styles.ftTripToggle}>
                                 <button className={`${styles.ftToggleBtn} ${flightTripType === 'RT' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('RT')}>Round Trip</button>
                                 <button className={`${styles.ftToggleBtn} ${flightTripType === 'OW' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('OW')}>One Way</button>
                             </div>
-
                             <div className={styles.ftSearchGrid}>
-                                <div>
-                                    <label className={styles.ftLabel}>From</label>
-                                    <AirportSearchInput value={flightOrigin} onChange={setFlightOrigin} placeholder="City or airport code" />
-                                </div>
-                                <div>
-                                    <label className={styles.ftLabel}>To</label>
-                                    <AirportSearchInput value={flightDest} onChange={setFlightDest} placeholder="City or airport code" />
-                                </div>
-                                <div>
-                                    <label className={styles.ftLabel}>Departure</label>
-                                    <CustomDatePicker value={flightDepart} onChange={setFlightDepart} placeholder="Select date" minDate={todayStr} />
-                                </div>
-                                {flightTripType === 'RT' && (
-                                    <div>
-                                        <label className={styles.ftLabel}>Return</label>
-                                        <CustomDatePicker value={flightReturn} onChange={setFlightReturn} placeholder="Select date" minDate={flightDepart || todayStr} />
-                                    </div>
-                                )}
+                                <div><label className={styles.ftLabel}>From</label><AirportSearchInput value={flightOrigin} onChange={setFlightOrigin} placeholder="City or airport code" /></div>
+                                <div><label className={styles.ftLabel}>To</label><AirportSearchInput value={flightDest} onChange={setFlightDest} placeholder="City or airport code" /></div>
+                                <div><label className={styles.ftLabel}>Departure</label><CustomDatePicker value={flightDepart} onChange={setFlightDepart} placeholder="Select date" minDate={todayStr} /></div>
+                                {flightTripType === 'RT' && (<div><label className={styles.ftLabel}>Return</label><CustomDatePicker value={flightReturn} onChange={setFlightReturn} placeholder="Select date" minDate={flightDepart || todayStr} /></div>)}
                             </div>
-
                             <div className={styles.ftPaxRow}>
-                                <div className={styles.ftPaxControl}>
-                                    <span className={styles.ftPaxLabel}>Adults</span>
-                                    <div className={styles.ftPaxBtns}>
-                                        <button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.max(1, flightAdults - 1))}>−</button>
-                                        <span className={styles.ftPaxCount}>{flightAdults}</span>
-                                        <button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.min(9 - flightChildren, flightAdults + 1))}>+</button>
-                                    </div>
-                                </div>
-                                <div className={styles.ftPaxControl}>
-                                    <span className={styles.ftPaxLabel}>Children</span>
-                                    <div className={styles.ftPaxBtns}>
-                                        <button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.max(0, flightChildren - 1))}>−</button>
-                                        <span className={styles.ftPaxCount}>{flightChildren}</span>
-                                        <button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.min(9 - flightAdults, flightChildren + 1))}>+</button>
-                                    </div>
-                                </div>
-
-                                <button
-                                    className={styles.ftSearchBtn}
-                                    onClick={searchFlights}
-                                    disabled={!canSearchFlights || isSearchingFlights}
-                                >
+                                <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Adults</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.max(1, flightAdults - 1))}>−</button><span className={styles.ftPaxCount}>{flightAdults}</span><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.min(9 - flightChildren, flightAdults + 1))}>+</button></div></div>
+                                <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Children</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.max(0, flightChildren - 1))}>−</button><span className={styles.ftPaxCount}>{flightChildren}</span><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.min(9 - flightAdults, flightChildren + 1))}>+</button></div></div>
+                                <button className={styles.ftSearchBtn} onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}>
                                     {isSearchingFlights ? <Loader2 size={20} className={styles.spinner} /> : <Search size={20} />}
                                     <span>{isSearchingFlights ? 'Searching...' : 'Search Flights'}</span>
                                 </button>
                             </div>
+                            {flightOrigin && flightDest && flightOrigin === flightDest && (<div className={styles.ftError}>Origin and destination cannot be the same.</div>)}
 
-                            {flightOrigin && flightDest && flightOrigin === flightDest && (
-                                <div className={styles.ftError}>Origin and destination cannot be the same.</div>
+                            {/* Filter bar — appears after search */}
+                            {(hasSearchedFlights && flightResults.length > 0) && (
+                                <div className={styles.ftFilterBar}>
+                                    <span className={styles.ftFilterLabel}>Select departure from {flightOrigin}</span>
+                                    <div className={styles.ftFilters}>
+                                        <select className={styles.ftFilterSelect} value={filterStops} onChange={(e) => setFilterStops(e.target.value as 'any' | 'nonstop' | 'one_stop')}>
+                                            <option value="any">Any stops</option>
+                                            <option value="nonstop">Nonstop only</option>
+                                            <option value="one_stop">1 stop or fewer</option>
+                                        </select>
+                                        <select className={styles.ftFilterSelect} value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)}>
+                                            <option value="">All airlines</option>
+                                            {uniqueAirlines.map(([code, name]) => (<option key={code} value={code}>{name}</option>))}
+                                        </select>
+                                        {(filterStops !== 'any' || filterAirline) && (
+                                            <button className={styles.ftFilterClear} onClick={() => { setFilterStops('any'); setFilterAirline(''); }}>Clear filters</button>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
 
-                        {/* Loading */}
+                        {/* Loading overlay */}
                         {isSearchingFlights && (
-                            <div className={styles.ftLoadingOverlay}>
-                                <div className={styles.ftLoadingModal}>
-                                    <Plane size={32} strokeWidth={1.5} />
-                                    <h3>{flightTripType === 'RT' ? 'Round Trip' : 'One Way'} — {flightOrigin} → {flightDest}</h3>
-                                    <p>Checking with airlines...</p>
-                                    <div className={styles.ftLoadingBar} />
-                                </div>
-                            </div>
+                            <div className={styles.ftLoadingOverlay}><div className={styles.ftLoadingModal}>
+                                <Plane size={32} strokeWidth={1.5} />
+                                <h3>{flightTripType === 'RT' ? 'Round Trip' : 'One Way'} — {flightOrigin} → {flightDest}</h3>
+                                <p>Checking with airlines...</p>
+                                <div className={styles.ftLoadingBar} />
+                            </div></div>
                         )}
 
-                        {/* Error */}
+                        {/* Reviewing overlay */}
+                        {isReviewing && (
+                            <div className={styles.ftLoadingOverlay}><div className={styles.ftLoadingModal}>
+                                <Loader2 size={32} className={styles.spinner} />
+                                <h3>Confirming availability...</h3>
+                                <p>Reviewing fare with airline</p>
+                                <div className={styles.ftLoadingBar} />
+                            </div></div>
+                        )}
+
                         {flightError && <div className={`${styles.card} ${styles.cardFull}`}><div className={styles.ftError}>{flightError}</div></div>}
 
                         {/* Results */}
                         {!isSearchingFlights && hasSearchedFlights && flightResults.length > 0 && (
                             <div className={`${styles.card} ${styles.cardFull}`}>
                                 <div className={styles.ftResultsHeader}>
-                                    <h3>{flightResults.length} flight{flightResults.length !== 1 ? 's' : ''} found</h3>
-                                    <span className={styles.ftResultsSub}>Sorted by price</span>
-                                </div>
-                                <div className={styles.ftResultsList}>
-                                    {flightResults.map(flight => (
-                                        <div
-                                            key={flight.id}
-                                            className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`}
-                                            onClick={() => setSelectedFlight(flight)}
-                                        >
-                                            <div className={styles.ftCardAirline}>
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={flight.carrierLogo} alt={flight.carrierName} width={28} height={28} className={styles.ftAirlineLogo} />
-                                                <span className={styles.ftAirlineName}>{flight.carrierName}</span>
-                                            </div>
-                                            <div className={styles.ftCardLegs}>
-                                                <div className={styles.ftLeg}>
-                                                    <div className={styles.ftTime}>
-                                                        <span className={styles.ftTimeVal}>{flight.outbound.departTime || '--:--'}</span>
-                                                        <span className={styles.ftAirport}>{flight.outbound.departAirport}</span>
-                                                    </div>
-                                                    <div className={styles.ftRoute}>
-                                                        <span className={styles.ftDuration}>{flight.outbound.duration}</span>
-                                                        <div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div>
-                                                        <span className={styles.ftStops}>{formatStops(flight.outbound.stops)}</span>
-                                                    </div>
-                                                    <div className={styles.ftTime}>
-                                                        <span className={styles.ftTimeVal}>{flight.outbound.arriveTime || '--:--'}</span>
-                                                        <span className={styles.ftAirport}>{flight.outbound.arriveAirport}</span>
-                                                    </div>
-                                                </div>
-                                                {flight.inbound && (
-                                                    <div className={styles.ftLeg} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                                                        <div className={styles.ftTime}>
-                                                            <span className={styles.ftTimeVal}>{flight.inbound.departTime || '--:--'}</span>
-                                                            <span className={styles.ftAirport}>{flight.inbound.departAirport}</span>
-                                                        </div>
-                                                        <div className={styles.ftRoute}>
-                                                            <span className={styles.ftDuration}>{flight.inbound.duration}</span>
-                                                            <div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div>
-                                                            <span className={styles.ftStops}>{formatStops(flight.inbound.stops)}</span>
-                                                        </div>
-                                                        <div className={styles.ftTime}>
-                                                            <span className={styles.ftTimeVal}>{flight.inbound.arriveTime || '--:--'}</span>
-                                                            <span className={styles.ftAirport}>{flight.inbound.arriveAirport}</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className={styles.ftCardPrice}>
-                                                <span className={styles.ftPriceVal}>{formatPrice(flight.price, flight.currency)}</span>
-                                                <span className={styles.ftPricePer}>per person</span>
-                                            </div>
-                                            {selectedFlight?.id === flight.id && (
-                                                <div className={styles.ftSelectedBadge}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                    <h3>Available Flights</h3>
+                                    <span className={styles.ftResultsSub}>{filteredFlights.length} of {flightResults.length} result{flightResults.length !== 1 ? 's' : ''}</span>
                                 </div>
 
-                                {selectedFlight && (
-                                    <div className={styles.ftBookBar}>
-                                        <div className={styles.ftBookInfo}>
-                                            <span className={styles.ftBookAirline}>{selectedFlight.carrierName}</span>
-                                            <span className={styles.ftBookRoute}>{selectedFlight.outbound.departAirport} → {selectedFlight.outbound.arriveAirport}</span>
-                                        </div>
-                                        <div className={styles.ftBookRight}>
-                                            <span className={styles.ftBookPrice}>{formatPrice(selectedFlight.price, selectedFlight.currency)}</span>
-                                            <button className={styles.ftBookBtn} onClick={handleBookFlight}>
-                                                Continue to Book <ArrowRight size={18} />
-                                            </button>
-                                        </div>
+                                {filteredFlights.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#888' }}>
+                                        <p>No flights match your filters. Try adjusting or clearing filters.</p>
+                                    </div>
+                                ) : (
+                                    <div className={styles.ftResultsList}>
+                                        {filteredFlights.map(flight => (
+                                            <div key={flight.id} className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`} onClick={() => setDetailFlight(flight)}>
+                                                <div className={styles.ftCardAirline}>
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={flight.carrierLogo} alt={flight.carrierName} width={28} height={28} className={styles.ftAirlineLogo} />
+                                                    <span className={styles.ftAirlineName}>{flight.carrierName}</span>
+                                                </div>
+                                                <div className={styles.ftCardLegs}>
+                                                    <div className={styles.ftLeg}>
+                                                        <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.departAirport}</span></div>
+                                                        <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.outbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.outbound.stops)}</span></div>
+                                                        <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.arriveAirport}</span></div>
+                                                    </div>
+                                                    {flight.inbound && (
+                                                        <div className={styles.ftLeg} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                                                            <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.departAirport}</span></div>
+                                                            <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.inbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.inbound.stops)}</span></div>
+                                                            <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.arriveAirport}</span></div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={styles.ftCardPrice}>
+                                                    <span className={styles.ftPriceVal}>{formatPrice(flight.price, flight.currency)}</span>
+                                                    <span className={styles.ftPricePer}>per person</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Pre-search: Recent search chips */}
+                        {/* Pre-search: Featured routes + chips */}
                         {!hasSearchedFlights && !isSearchingFlights && (
                             <div className={`${styles.card} ${styles.cardFull}`}>
                                 <h3 className={styles.ftPreTitle}>Popular Routes</h3>
@@ -1060,6 +1056,52 @@ export default function Portal() {
                                     <button className={styles.ftChip} onClick={() => { setFlightOrigin('JFK'); setFlightDest('LAX'); }}>JFK → LAX</button>
                                     <button className={styles.ftChip} onClick={() => { setFlightOrigin('ORD'); setFlightDest('MIA'); }}>ORD → MIA</button>
                                     <button className={styles.ftChip} onClick={() => { setFlightOrigin('LHR'); setFlightDest('CDG'); }}>LHR → CDG</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Flight Detail Modal */}
+                        {detailFlight && (
+                            <div className={styles.ftModalOverlay} onClick={() => setDetailFlight(null)}>
+                                <div className={styles.ftModal} onClick={(e) => e.stopPropagation()}>
+                                    <button className={styles.ftModalClose} onClick={() => setDetailFlight(null)}><X size={20} /></button>
+                                    <div className={styles.ftModalHeader}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={detailFlight.carrierLogo} alt="" width={36} height={36} style={{ borderRadius: '8px' }} />
+                                        <div>
+                                            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--isa-black)', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>{detailFlight.carrierName}</h3>
+                                            <span style={{ fontSize: '0.85rem', color: '#888' }}>{detailFlight.outbound.departAirport} → {detailFlight.outbound.arriveAirport}{detailFlight.inbound ? ` → ${detailFlight.inbound.arriveAirport}` : ''}</span>
+                                        </div>
+                                    </div>
+
+                                    {[detailFlight.outbound, ...(detailFlight.inbound ? [detailFlight.inbound] : [])].map((leg, li) => (
+                                        <div key={li} className={styles.ftModalLeg}>
+                                            <div className={styles.ftModalLegTitle}>{li === 0 ? 'Outbound' : 'Return'} • {leg.duration} • {formatStops(leg.stops)}</div>
+                                            {leg.segments.map((seg, si) => (
+                                                <div key={si} className={styles.ftModalSeg}>
+                                                    <div className={styles.ftModalSegTimes}>
+                                                        <div><span className={styles.ftModalSegTime}>{seg.departTime}</span><span className={styles.ftModalSegCode}>{seg.from}</span></div>
+                                                        <div className={styles.ftModalSegLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div>
+                                                        <div><span className={styles.ftModalSegTime}>{seg.arriveTime}</span><span className={styles.ftModalSegCode}>{seg.to}</span></div>
+                                                    </div>
+                                                    <div className={styles.ftModalSegMeta}>
+                                                        <span>{seg.carrierName} {seg.flightNumber}</span>
+                                                        <span>{seg.cabin}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+
+                                    <div className={styles.ftModalFooter}>
+                                        <div className={styles.ftModalPrice}>
+                                            <span className={styles.ftPriceVal}>{formatPrice(detailFlight.price, detailFlight.currency)}</span>
+                                            <span className={styles.ftPricePer}>per person</span>
+                                        </div>
+                                        <button className={styles.ftBookBtn} onClick={() => { setDetailFlight(null); setSelectedFlight(detailFlight); handleBookFlight(detailFlight); }}>
+                                            Continue to Book <ArrowRight size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -1099,11 +1141,20 @@ export default function Portal() {
                                     <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="Select date" minDate={hotelCheckin || todayStr} />
                                 </div>
                                 <div>
-                                    <label className={styles.ftLabel}>Guests</label>
-                                    <div className={styles.ftPaxBtns} style={{ height: '52px', justifyContent: 'center' }}>
-                                        <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
-                                        <span className={styles.ftPaxCount}>{hotelAdults} Adult{hotelAdults !== 1 ? 's' : ''}</span>
-                                        <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                    <label className={styles.ftLabel}>Guests & Rooms</label>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', height: '52px' }}>
+                                        <div className={styles.ftPaxBtns}>
+                                            <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
+                                            <span className={styles.ftPaxCount}>{hotelAdults}</span>
+                                            <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                        </div>
+                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>adults</span>
+                                        <div className={styles.ftPaxBtns}>
+                                            <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}>−</button>
+                                            <span className={styles.ftPaxCount}>{hotelRooms}</span>
+                                            <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.min(4, hotelRooms + 1))}>+</button>
+                                        </div>
+                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>room{hotelRooms !== 1 ? 's' : ''}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1157,38 +1208,45 @@ export default function Portal() {
                                     <span className={styles.ftResultsSub}>in {hotelCity}</span>
                                 </div>
                                 <div className={styles.htGrid}>
-                                    {hotelResults.map(hotel => (
-                                        <div key={hotel.hotelId} className={styles.htCard}>
-                                            {hotel.image ? (
-                                                <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
-                                            ) : (
-                                                <div className={styles.htCardImagePlaceholder}><MapPin size={24} /></div>
-                                            )}
-                                            <div className={styles.htCardBody}>
-                                                <div className={styles.htCardTop}>
-                                                    <h4 className={styles.htCardName}>{hotel.name}</h4>
-                                                    {hotel.stars > 0 && (
-                                                        <div className={styles.htStars}><Star size={13} fill="currentColor" /><span>{hotel.stars}</span></div>
-                                                    )}
-                                                </div>
-                                                {hotel.address && <p className={styles.htCardAddr}>{hotel.address}</p>}
-                                                <div className={styles.htTags}>
-                                                    {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={12} /> Breakfast</span>}
-                                                    {hotel.hasRefundable && <span className={styles.htTag}><ShieldCheck size={12} /> Free cancellation</span>}
-                                                </div>
-                                                <div className={styles.htCardBottom}>
-                                                    {hotel.price > 0 ? (
-                                                        <div className={styles.htPriceBlock}>
-                                                            <span className={styles.htPrice}>{formatPrice(hotel.price, hotel.currency)}</span>
-                                                            <span className={styles.htPricePer}>total stay</span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className={styles.htNoPrice}>Price unavailable</span>
-                                                    )}
+                                    {hotelResults.map(hotel => {
+                                        const nights = (hotelCheckin && hotelCheckout) ? calcNights(hotelCheckin, hotelCheckout) : 1;
+                                        const perNight = hotel.price > 0 ? Math.round(hotel.price / nights) : 0;
+                                        return (
+                                            <div key={hotel.hotelId} className={styles.htCard} onClick={() => router.push('/booking')}>
+                                                {hotel.image ? (
+                                                    <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
+                                                ) : (
+                                                    <div className={styles.htCardImagePlaceholder}><MapPin size={24} /></div>
+                                                )}
+                                                <div className={styles.htCardBody}>
+                                                    <div className={styles.htCardTop}>
+                                                        <h4 className={styles.htCardName}>{hotel.name}</h4>
+                                                        {hotel.stars > 0 && (
+                                                            <div className={styles.htStars}><Star size={13} fill="currentColor" /><span>{hotel.stars}</span></div>
+                                                        )}
+                                                    </div>
+                                                    {hotel.address && <p className={styles.htCardAddr}>{hotel.address}</p>}
+                                                    <div className={styles.htTags}>
+                                                        {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={12} /> Breakfast</span>}
+                                                        {hotel.hasRefundable && <span className={styles.htTag}><ShieldCheck size={12} /> Free cancellation</span>}
+                                                    </div>
+                                                    <div className={styles.htCardBottom}>
+                                                        {hotel.price > 0 ? (
+                                                            <>
+                                                                <div className={styles.htPriceBlock}>
+                                                                    <span className={styles.htPrice}>{formatPrice(perNight, hotel.currency)}</span>
+                                                                    <span className={styles.htPricePer}>/ night</span>
+                                                                </div>
+                                                                <span className={styles.htTotalLabel}>{formatPrice(hotel.price, hotel.currency)} for {nights} night{nights !== 1 ? 's' : ''}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className={styles.htNoPrice}>Price unavailable</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

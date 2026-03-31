@@ -1691,3 +1691,74 @@
     .tCardActions { width: 100%; justify-content: flex-end; }
     .addTravelerHeaderBtn { width: 100%; justify-content: center; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FLIGHT FILTER BAR
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.ftFilterBar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-top: 20px; padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+.ftFilterLabel { font-size: 0.95rem; font-weight: 600; color: var(--isa-black); }
+.ftFilters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ftFilterSelect {
+    padding: 8px 32px 8px 12px; border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px; font-size: 0.85rem; color: var(--isa-black);
+    background: white; cursor: pointer; appearance: auto; outline: none;
+}
+.ftFilterSelect:focus { border-color: var(--isa-red); }
+.ftFilterClear {
+    padding: 8px 16px; border: none; background: rgba(230,57,70,0.06);
+    color: var(--isa-red); border-radius: 8px; font-size: 0.8rem;
+    font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.ftFilterClear:hover { background: rgba(230,57,70,0.12); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FLIGHT DETAIL MODAL
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.ftModalOverlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; animation: fadeIn 0.2s ease;
+}
+.ftModal {
+    background: white; border-radius: 24px; padding: 32px;
+    max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.15); position: relative;
+}
+.ftModalClose {
+    position: absolute; top: 20px; right: 20px; width: 36px; height: 36px;
+    border-radius: 50%; background: #f6f7f9; display: flex;
+    align-items: center; justify-content: center; border: none;
+    cursor: pointer; color: #666; transition: all 0.2s;
+}
+.ftModalClose:hover { background: #eee; color: var(--isa-black); }
+.ftModalHeader { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-right: 40px; }
+.ftModalLeg { margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 16px; }
+.ftModalLegTitle { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 16px; }
+.ftModalSeg { margin-bottom: 16px; }
+.ftModalSeg:last-child { margin-bottom: 0; }
+.ftModalSegTimes { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.ftModalSegTime { font-size: 1.15rem; font-weight: 700; color: var(--isa-black); }
+.ftModalSegCode { display: block; font-size: 0.75rem; color: #999; font-weight: 600; }
+.ftModalSegLine { flex: 1; display: flex; align-items: center; }
+.ftModalSegMeta { display: flex; gap: 16px; font-size: 0.8rem; color: #888; }
+.ftModalFooter {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06);
+}
+.ftModalPrice { display: flex; flex-direction: column; }
+
+/* Hotel total label */
+.htTotalLabel { font-size: 0.8rem; color: #888; }
+
+@media (max-width: 768px) {
+    .ftFilterBar { flex-direction: column; align-items: stretch; }
+    .ftModal { padding: 24px; margin: 16px; max-height: 90vh; }
+    .ftModalFooter { flex-direction: column; gap: 16px; }
+}

@@ -1530,7 +1530,7 @@
 .htCardPrice { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .htPrice { font-size: 1.2rem; font-weight: 700; color: var(--isa-black); }
 .htPricePer { font-size: 0.78rem; color: #bbb; }
-.htTotalLabel { font-size: 0.75rem; color: #bbb; margin-left: auto; }
+.htTotalLabel { font-size: 0.8rem; color: #888; }
 .htNoPrice { font-size: 0.85rem; color: #bbb; font-style: italic; }
 
 /* ── Hotel Destinations ───────────────────────────────────────────────────── */
@@ -1898,8 +1898,6 @@
 }
 .ftModalPrice { display: flex; flex-direction: column; }
 
-/* Hotel total label */
-.htTotalLabel { font-size: 0.8rem; color: #888; }
 
 @media (max-width: 768px) {
     .ftFilterBar { flex-direction: column; align-items: stretch; }

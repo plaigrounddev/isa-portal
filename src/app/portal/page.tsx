@@ -1018,7 +1018,7 @@ export default function Portal() {
                                             <div key={flight.id} className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`} onClick={() => setDetailFlight(flight)}>
                                                 <div className={styles.ftCardAirline}>
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={flight.carrierLogo} alt={flight.carrierName} width={28} height={28} className={styles.ftAirlineLogo} />
+                                                    {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={28} height={28} className={styles.ftAirlineLogo} />}
                                                     <span className={styles.ftAirlineName}>{flight.carrierName}</span>
                                                 </div>
                                                 <div className={styles.ftCardLegs}>

@@ -1025,7 +1025,7 @@ function BookingInner() {
                                         <div key={flight.id} className={`${styles.flightCard} ${selectedFlight?.id === flight.id ? styles.flightCardSelected : ''}`} onClick={() => setSelectedFlight(flight)}>
                                             <div className={styles.flightAirline}>
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={flight.carrierLogo} alt={flight.carrierName} width={30} height={30} className={styles.airlineLogo} />
+                                                {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={30} height={30} className={styles.airlineLogo} />}
                                                 <span className={styles.airlineName}>{flight.carrierName}</span>
                                             </div>
                                             <div className={styles.flightLegs}>
@@ -1287,7 +1287,7 @@ function BookingInner() {
                                 <div className={styles.reviewCardBody}>
                                     <div className={styles.reviewRow}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={selectedFlight.carrierLogo} alt="" width={24} height={24} style={{ borderRadius: '4px' }} />
+                                        {selectedFlight.carrierLogo && <img src={selectedFlight.carrierLogo} alt="" width={24} height={24} style={{ borderRadius: '4px' }} />}
                                         <span className={styles.reviewBold}>{selectedFlight.carrierName}</span>
                                     </div>
                                     <div className={styles.reviewRow}>

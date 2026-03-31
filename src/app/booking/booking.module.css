@@ -378,6 +378,10 @@
 
 .resultsHeader {
     margin-bottom: 16px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .resultsTitle {
@@ -385,6 +389,40 @@
     font-size: 1.1rem;
     color: var(--isa-black);
     letter-spacing: 1px;
+}
+
+.resultsShowing {
+    font-size: 0.8rem;
+    color: #999;
+    font-weight: 500;
+}
+
+.showMoreBtn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--isa-charcoal);
+    background: #f6f7f9;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: var(--font-sans);
+    letter-spacing: 0.5px;
+}
+
+.showMoreBtn:hover {
+    background: var(--isa-black);
+    color: white;
+    border-color: var(--isa-black);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.showMoreBtn:focus-visible {
+    outline: 2px solid var(--isa-red);
+    outline-offset: 2px;
 }
 
 .resultsList {

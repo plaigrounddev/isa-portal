@@ -553,6 +553,8 @@ function BookingInner() {
     const [isSearchingFlights, setIsSearchingFlights] = useState(false);
     const [flightError, setFlightError] = useState('');
     const [hasSearchedFlights, setHasSearchedFlights] = useState(false);
+    const [visibleFlightCount, setVisibleFlightCount] = useState(20);
+    const FLIGHTS_PER_PAGE = 20;
 
     const [wantsHotel, setWantsHotel] = useState<boolean | null>(null);
     const [hotelCity, setHotelCity] = useState('');
@@ -677,6 +679,7 @@ function BookingInner() {
         setFlightResults([]);
         setSelectedFlight(null);
         setHasSearchedFlights(true);
+        setVisibleFlightCount(FLIGHTS_PER_PAGE);
 
         try {
             const passengers: { type: 'ADT' | 'CNN' | 'INF'; quantity: number }[] = [{ type: 'ADT', quantity: adults }];
@@ -1015,65 +1018,78 @@ function BookingInner() {
                         )}
 
                         {/* Results */}
-                        {!isSearchingFlights && hasSearchedFlights && flightResults.length > 0 && (
-                            <div className={styles.resultsSection}>
-                                <div className={styles.resultsHeader}>
-                                    <h3 className={styles.resultsTitle}>{flightResults.length} flight{flightResults.length !== 1 ? 's' : ''} found</h3>
-                                </div>
-                                <div className={styles.resultsList}>
-                                    {flightResults.map(flight => (
-                                        <div key={flight.id} className={`${styles.flightCard} ${selectedFlight?.id === flight.id ? styles.flightCardSelected : ''}`} onClick={() => setSelectedFlight(flight)}>
-                                            <div className={styles.flightAirline}>
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={30} height={30} className={styles.airlineLogo} />}
-                                                <span className={styles.airlineName}>{flight.carrierName}</span>
-                                            </div>
-                                            <div className={styles.flightLegs}>
-                                                <div className={styles.flightLeg}>
-                                                    <div className={styles.flightTime}>
-                                                        <span className={styles.flightTimeValue}>{flight.outbound.departTime || '--:--'}</span>
-                                                        <span className={styles.flightAirportCode}>{flight.outbound.departAirport}</span>
-                                                    </div>
-                                                    <div className={styles.flightRoute}>
-                                                        <span className={styles.flightDuration}>{formatDuration(flight.outbound.duration)}</span>
-                                                        <div className={styles.flightLine}><div className={styles.flightDot} /><div className={styles.flightDash} /><div className={styles.flightDot} /></div>
-                                                        <span className={styles.flightStops}>{formatStops(flight.outbound.stops)}</span>
-                                                    </div>
-                                                    <div className={styles.flightTime}>
-                                                        <span className={styles.flightTimeValue}>{flight.outbound.arriveTime || '--:--'}</span>
-                                                        <span className={styles.flightAirportCode}>{flight.outbound.arriveAirport}</span>
-                                                    </div>
+                        {!isSearchingFlights && hasSearchedFlights && flightResults.length > 0 && (() => {
+                            const visibleFlights = flightResults.slice(0, visibleFlightCount);
+                            const hasMore = flightResults.length > visibleFlightCount;
+                            const remaining = flightResults.length - visibleFlightCount;
+
+                            return (
+                                <div className={styles.resultsSection}>
+                                    <div className={styles.resultsHeader}>
+                                        <h3 className={styles.resultsTitle}>{flightResults.length} flight{flightResults.length !== 1 ? 's' : ''} found</h3>
+                                        <span className={styles.resultsShowing}>Showing {visibleFlights.length} of {flightResults.length}</span>
+                                    </div>
+                                    <div className={styles.resultsList}>
+                                        {visibleFlights.map(flight => (
+                                            <div key={flight.id} className={`${styles.flightCard} ${selectedFlight?.id === flight.id ? styles.flightCardSelected : ''}`} onClick={() => setSelectedFlight(flight)}>
+                                                <div className={styles.flightAirline}>
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={30} height={30} className={styles.airlineLogo} />}
+                                                    <span className={styles.airlineName}>{flight.carrierName}</span>
                                                 </div>
-                                                {flight.inbound && (
+                                                <div className={styles.flightLegs}>
                                                     <div className={styles.flightLeg}>
                                                         <div className={styles.flightTime}>
-                                                            <span className={styles.flightTimeValue}>{flight.inbound.departTime || '--:--'}</span>
-                                                            <span className={styles.flightAirportCode}>{flight.inbound.departAirport}</span>
+                                                            <span className={styles.flightTimeValue}>{flight.outbound.departTime || '--:--'}</span>
+                                                            <span className={styles.flightAirportCode}>{flight.outbound.departAirport}</span>
                                                         </div>
                                                         <div className={styles.flightRoute}>
-                                                            <span className={styles.flightDuration}>{formatDuration(flight.inbound.duration)}</span>
+                                                            <span className={styles.flightDuration}>{formatDuration(flight.outbound.duration)}</span>
                                                             <div className={styles.flightLine}><div className={styles.flightDot} /><div className={styles.flightDash} /><div className={styles.flightDot} /></div>
-                                                            <span className={styles.flightStops}>{formatStops(flight.inbound.stops)}</span>
+                                                            <span className={styles.flightStops}>{formatStops(flight.outbound.stops)}</span>
                                                         </div>
                                                         <div className={styles.flightTime}>
-                                                            <span className={styles.flightTimeValue}>{flight.inbound.arriveTime || '--:--'}</span>
-                                                            <span className={styles.flightAirportCode}>{flight.inbound.arriveAirport}</span>
+                                                            <span className={styles.flightTimeValue}>{flight.outbound.arriveTime || '--:--'}</span>
+                                                            <span className={styles.flightAirportCode}>{flight.outbound.arriveAirport}</span>
                                                         </div>
                                                     </div>
+                                                    {flight.inbound && (
+                                                        <div className={styles.flightLeg}>
+                                                            <div className={styles.flightTime}>
+                                                                <span className={styles.flightTimeValue}>{flight.inbound.departTime || '--:--'}</span>
+                                                                <span className={styles.flightAirportCode}>{flight.inbound.departAirport}</span>
+                                                            </div>
+                                                            <div className={styles.flightRoute}>
+                                                                <span className={styles.flightDuration}>{formatDuration(flight.inbound.duration)}</span>
+                                                                <div className={styles.flightLine}><div className={styles.flightDot} /><div className={styles.flightDash} /><div className={styles.flightDot} /></div>
+                                                                <span className={styles.flightStops}>{formatStops(flight.inbound.stops)}</span>
+                                                            </div>
+                                                            <div className={styles.flightTime}>
+                                                                <span className={styles.flightTimeValue}>{flight.inbound.arriveTime || '--:--'}</span>
+                                                                <span className={styles.flightAirportCode}>{flight.inbound.arriveAirport}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={styles.flightPrice}>
+                                                    <span className={styles.flightPriceValue}>{formatPrice(flight.price, flight.currency)}</span>
+                                                    <span className={styles.flightPriceLabel}>per person</span>
+                                                </div>
+                                                {selectedFlight?.id === flight.id && (
+                                                    <div className={styles.flightCheck}><CheckIcon color="white" /></div>
                                                 )}
                                             </div>
-                                            <div className={styles.flightPrice}>
-                                                <span className={styles.flightPriceValue}>{formatPrice(flight.price, flight.currency)}</span>
-                                                <span className={styles.flightPriceLabel}>per person</span>
-                                            </div>
-                                            {selectedFlight?.id === flight.id && (
-                                                <div className={styles.flightCheck}><CheckIcon color="white" /></div>
-                                            )}
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+
+                                    {hasMore && (
+                                        <button className={styles.showMoreBtn} onClick={() => setVisibleFlightCount(prev => prev + FLIGHTS_PER_PAGE)}>
+                                            Show {Math.min(remaining, FLIGHTS_PER_PAGE)} More Flight{Math.min(remaining, FLIGHTS_PER_PAGE) !== 1 ? 's' : ''}
+                                        </button>
+                                    )}
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* Continue */}
                         {selectedFlight && (

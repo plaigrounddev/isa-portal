@@ -1193,20 +1193,17 @@ export default function Portal() {
                     <div className={styles.tabContentBlock}>
                         <div className={styles.welcomeSection}>
                             <h1 className={styles.pageTitle}>Find a Stay</h1>
-                            <p className={styles.pageSubtitle}>Search hotels worldwide with real-time pricing and availability.</p>
+                            <p className={styles.pageSubtitle}>Search real-time hotel rates and availability worldwide.</p>
                         </div>
 
+                        {/* Search */}
                         <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
                             <div className={styles.htSearchGrid}>
                                 <div>
                                     <label className={styles.ftLabel}>Destination</label>
                                     <div className={styles.htInputWrapper}>
                                         <MapPin size={16} strokeWidth={1.5} className={styles.htInputIcon} />
-                                        <input
-                                            type="text" className={styles.htInput}
-                                            placeholder="City or hotel name" value={hotelCity}
-                                            onChange={(e) => setHotelCity(e.target.value)}
-                                        />
+                                        <input type="text" className={styles.htInput} placeholder="Where are you going?" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} />
                                     </div>
                                 </div>
                                 <div>
@@ -1218,71 +1215,73 @@ export default function Portal() {
                                     <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="Select date" minDate={hotelCheckin || todayStr} />
                                 </div>
                                 <div>
-                                    <label className={styles.ftLabel}>Guests & Rooms</label>
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', height: '52px' }}>
-                                        <div className={styles.ftPaxBtns}>
-                                            <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
-                                            <span className={styles.ftPaxCount}>{hotelAdults}</span>
-                                            <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                    <label className={styles.ftLabel}>Guests</label>
+                                    <div className={styles.htGuestControl}>
+                                        <div className={styles.htGuestGroup}>
+                                            <div className={styles.ftPaxBtns}>
+                                                <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
+                                                <span className={styles.ftPaxCount}>{hotelAdults}</span>
+                                                <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                            </div>
+                                            <span className={styles.htGuestLabel}>{hotelAdults === 1 ? 'adult' : 'adults'}</span>
                                         </div>
-                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>adults</span>
-                                        <div className={styles.ftPaxBtns}>
-                                            <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}>−</button>
-                                            <span className={styles.ftPaxCount}>{hotelRooms}</span>
-                                            <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.min(4, hotelRooms + 1))}>+</button>
+                                        <div className={styles.htGuestDivider} />
+                                        <div className={styles.htGuestGroup}>
+                                            <div className={styles.ftPaxBtns}>
+                                                <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}>−</button>
+                                                <span className={styles.ftPaxCount}>{hotelRooms}</span>
+                                                <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.min(4, hotelRooms + 1))}>+</button>
+                                            </div>
+                                            <span className={styles.htGuestLabel}>{hotelRooms === 1 ? 'room' : 'rooms'}</span>
                                         </div>
-                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>room{hotelRooms !== 1 ? 's' : ''}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <button
-                                className={styles.ftSearchBtn}
-                                onClick={() => searchHotels()}
-                                disabled={!hotelCity || isSearchingHotels}
-                                style={{ marginTop: '16px', width: '100%' }}
-                            >
-                                {isSearchingHotels ? <Loader2 size={20} className={styles.spinner} /> : <Search size={20} />}
+                            <button className={styles.htSearchBtn} onClick={() => searchHotels()} disabled={!hotelCity || isSearchingHotels}>
+                                {isSearchingHotels ? <Loader2 size={18} className={styles.spinner} /> : <Search size={18} />}
                                 <span>{isSearchingHotels ? 'Searching...' : 'Search Hotels'}</span>
                             </button>
                         </div>
 
-                        {/* Error */}
-                        {hotelError && <div className={`${styles.card} ${styles.cardFull}`}><div className={styles.ftError}>{hotelError}</div></div>}
-
-                        {/* Loading skeleton */}
+                        {/* Loading */}
                         {isSearchingHotels && (
-                            <div className={`${styles.card} ${styles.cardFull}`}>
-                                <div className={styles.htSkeletonGrid}>
-                                    {[1, 2, 3, 4, 5, 6].map(i => (
-                                        <div key={i} className={styles.htSkeleton}>
-                                            <div className={styles.htSkeletonImg} />
-                                            <div className={styles.htSkeletonBody}>
-                                                <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
-                                                <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
-                                                <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
-                                            </div>
+                            <div className={styles.htSkeletonGrid}>
+                                {[1, 2, 3, 4, 5, 6].map(i => (
+                                    <div key={i} className={styles.htSkeleton}>
+                                        <div className={styles.htSkeletonImg} />
+                                        <div className={styles.htSkeletonBody}>
+                                            <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
+                                            <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
+                                            <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
-                        {/* Empty state */}
-                        {hasSearchedHotels && !isSearchingHotels && hotelResults.length === 0 && !hotelError && (
-                            <div className={`${styles.card} ${styles.cardFull}`} style={{ textAlign: 'center', padding: '64px 32px' }}>
-                                <Search size={40} strokeWidth={1.2} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px' }}>No Hotels Found</h3>
-                                <p style={{ color: '#888' }}>Try adjusting your destination or dates.</p>
+                        {/* Empty / Error */}
+                        {hasSearchedHotels && !isSearchingHotels && hotelResults.length === 0 && (
+                            <div className={styles.htEmptyState}>
+                                <MapPin size={40} strokeWidth={1} />
+                                <h3>No hotels found{hotelCity ? ` in ${hotelCity}` : ''}</h3>
+                                <p>Try a different destination, adjust your dates, or expand your search.</p>
+                            </div>
+                        )}
+
+                        {/* Error (API failure only) */}
+                        {hotelError && hotelResults.length === 0 && !isSearchingHotels && !hasSearchedHotels && (
+                            <div className={styles.htEmptyState}>
+                                <p style={{ color: 'var(--isa-red)' }}>{hotelError}</p>
                             </div>
                         )}
 
                         {/* Results */}
                         {!isSearchingHotels && hotelResults.length > 0 && (
-                            <div className={`${styles.card} ${styles.cardFull}`}>
-                                <div className={styles.ftResultsHeader}>
-                                    <h3>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''} found</h3>
-                                    <span className={styles.ftResultsSub}>in {hotelCity}</span>
+                            <>
+                                <div className={styles.htResultsBar}>
+                                    <span className={styles.htResultsCount}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''}</span>
+                                    <span className={styles.htResultsCity}>in {hotelCity}</span>
                                 </div>
                                 <div className={styles.htGrid}>
                                     {hotelResults.map(hotel => {
@@ -1293,31 +1292,29 @@ export default function Portal() {
                                                 {hotel.image ? (
                                                     <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
                                                 ) : (
-                                                    <div className={styles.htCardImagePlaceholder}><MapPin size={24} /></div>
+                                                    <div className={styles.htCardImagePlaceholder}><MapPin size={20} /></div>
                                                 )}
                                                 <div className={styles.htCardBody}>
-                                                    <div className={styles.htCardTop}>
-                                                        <h4 className={styles.htCardName}>{hotel.name}</h4>
-                                                        {hotel.stars > 0 && (
-                                                            <div className={styles.htStars}><Star size={13} fill="currentColor" /><span>{hotel.stars}</span></div>
-                                                        )}
+                                                    <h4 className={styles.htCardName}>{hotel.name}</h4>
+                                                    <div className={styles.htCardMeta}>
+                                                        {hotel.stars > 0 && <span className={styles.htStars}><Star size={12} fill="currentColor" /> {hotel.stars}</span>}
+                                                        {hotel.address && <span className={styles.htCardAddr}>{hotel.address}</span>}
                                                     </div>
-                                                    {hotel.address && <p className={styles.htCardAddr}>{hotel.address}</p>}
-                                                    <div className={styles.htTags}>
-                                                        {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={12} /> Breakfast</span>}
-                                                        {hotel.hasRefundable && <span className={styles.htTag}><ShieldCheck size={12} /> Free cancellation</span>}
-                                                    </div>
-                                                    <div className={styles.htCardBottom}>
+                                                    {(hotel.hasBreakfast || hotel.hasRefundable) && (
+                                                        <div className={styles.htTags}>
+                                                            {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={11} /> Breakfast</span>}
+                                                            {hotel.hasRefundable && <span className={styles.htTagGreen}><ShieldCheck size={11} /> Free cancellation</span>}
+                                                        </div>
+                                                    )}
+                                                    <div className={styles.htCardPrice}>
                                                         {hotel.price > 0 ? (
                                                             <>
-                                                                <div className={styles.htPriceBlock}>
-                                                                    <span className={styles.htPrice}>{formatPrice(perNight, hotel.currency)}</span>
-                                                                    <span className={styles.htPricePer}>/ night</span>
-                                                                </div>
-                                                                <span className={styles.htTotalLabel}>{formatPrice(hotel.price, hotel.currency)} for {nights} night{nights !== 1 ? 's' : ''}</span>
+                                                                <span className={styles.htPrice}>{formatPrice(perNight, hotel.currency)}</span>
+                                                                <span className={styles.htPricePer}>/ night</span>
+                                                                {nights > 1 && <span className={styles.htTotalLabel}>{formatPrice(hotel.price, hotel.currency)} total</span>}
                                                             </>
                                                         ) : (
-                                                            <span className={styles.htNoPrice}>Price unavailable</span>
+                                                            <span className={styles.htNoPrice}>Prices on request</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1325,44 +1322,36 @@ export default function Portal() {
                                         );
                                     })}
                                 </div>
-                            </div>
+                            </>
                         )}
 
-                        {/* Pre-search content */}
+                        {/* Pre-search */}
                         {!hasSearchedHotels && !isSearchingHotels && (
                             <>
-                                <div className={`${styles.card} ${styles.cardFull}`}>
-                                    <h3 className={styles.ftPreTitle}>Quick Search</h3>
-                                    <div className={styles.ftChips}>
-                                        {QUICK_CITIES.map(c => (
-                                            <button key={c.label} className={styles.ftChip} onClick={() => handleDestinationClick(c.label, c.code)}>
-                                                <MapPin size={14} /> {c.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                <div className={styles.htQuickChips}>
+                                    {QUICK_CITIES.map(c => (
+                                        <button key={c.label} className={styles.htQuickChip} onClick={() => handleDestinationClick(c.label, c.code)}>
+                                            <MapPin size={14} /> {c.label}
+                                        </button>
+                                    ))}
                                 </div>
 
-                                <div className={`${styles.card} ${styles.cardFull}`} style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
-                                    <h3 className={styles.ftPreTitle} style={{ marginBottom: '16px' }}>Popular Destinations</h3>
-                                    <div className={styles.htDestGrid}>
-                                        {POPULAR_DESTINATIONS.map(d => (
-                                            <div key={d.city} className={styles.htDestCard} onClick={() => handleDestinationClick(d.city, d.country)}>
-                                                <div className={styles.htDestPhoto} style={{ backgroundImage: `url(${d.image})` }} />
-                                                <div className={styles.htDestOverlay}>
-                                                    <h4>{d.city}</h4>
-                                                    <span>from ${d.avgPrice}/night</span>
-                                                </div>
+                                <div className={styles.htDestGrid}>
+                                    {POPULAR_DESTINATIONS.map(d => (
+                                        <div key={d.city} className={styles.htDestCard} onClick={() => handleDestinationClick(d.city, d.country)}>
+                                            <div className={styles.htDestPhoto} style={{ backgroundImage: `url(${d.image})` }} />
+                                            <div className={styles.htDestOverlay}>
+                                                <h4>{d.city}</h4>
+                                                <span>from ${d.avgPrice}/night</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
                                 </div>
 
-                                <div className={`${styles.card} ${styles.cardFull}`}>
-                                    <div className={styles.htTrustBar}>
-                                        <div className={styles.htTrustItem}><ShieldCheck size={18} /><span>Free cancellation on most rooms</span></div>
-                                        <div className={styles.htTrustItem}><Coffee size={18} /><span>Breakfast details shown upfront</span></div>
-                                        <div className={styles.htTrustItem}><Star size={18} /><span>Verified guest ratings</span></div>
-                                    </div>
+                                <div className={styles.htTrustBar}>
+                                    <div className={styles.htTrustItem}><ShieldCheck size={16} /><span>Free cancellation on most rooms</span></div>
+                                    <div className={styles.htTrustItem}><Coffee size={16} /><span>Breakfast details shown upfront</span></div>
+                                    <div className={styles.htTrustItem}><Star size={16} /><span>Verified guest ratings</span></div>
                                 </div>
                             </>
                         )}

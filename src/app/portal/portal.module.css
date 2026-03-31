@@ -1370,76 +1370,128 @@
    HOTELS TAB
    ═══════════════════════════════════════════════════════════════════════════════ */
 
+/* ── Hotel Search ──────────────────────────────────────────────────────────── */
+
 .htSearchGrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 0; }
 .htInputWrapper { position: relative; }
-.htInputIcon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; z-index: 1; }
+.htInputIcon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #bbb; pointer-events: none; z-index: 1; }
 .htInput {
-    width: 100%; padding: 14px 16px 14px 40px; background: white;
+    width: 100%; padding: 14px 16px 14px 40px; background: #f9fafb;
     border: 1px solid rgba(0,0,0,0.06); border-radius: 12px;
-    font-size: 0.95rem; color: var(--isa-black); outline: none; transition: border-color 0.2s;
+    font-size: 0.95rem; color: var(--isa-black); outline: none;
+    font-family: var(--font-sans); transition: border-color 0.2s, background 0.2s;
 }
-.htInput::placeholder { color: #aaa; }
-.htInput:focus { border-color: rgba(0,0,0,0.15); }
+.htInput::placeholder { color: #bbb; }
+.htInput:focus { border-color: var(--isa-red); background: white; box-shadow: 0 0 0 3px rgba(230,57,70,0.06); }
+
+.htGuestControl { display: flex; align-items: center; gap: 12px; height: 52px; }
+.htGuestGroup { display: flex; align-items: center; gap: 8px; }
+.htGuestLabel { font-size: 0.8rem; color: #999; font-weight: 500; }
+.htGuestDivider { width: 1px; height: 24px; background: rgba(0,0,0,0.08); }
+
+.htSearchBtn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 16px; padding: 14px; border: none;
+    background: var(--isa-black); color: white; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; transition: all 0.25s;
+    font-family: var(--font-sans); letter-spacing: 0.3px; border-radius: 10px;
+}
+.htSearchBtn:hover { background: var(--isa-red); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(230,57,70,0.2); }
+.htSearchBtn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* ── Hotel Skeletons ──────────────────────────────────────────────────────── */
 
 .htSkeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.htSkeleton { border-radius: 16px; overflow: hidden; background: white; border: 1px solid rgba(0,0,0,0.04); }
-.htSkeletonImg { height: 160px; background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-.htSkeletonBody { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.htSkeletonLine { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.htSkeleton { border-radius: 14px; overflow: hidden; background: white; border: 1px solid rgba(0,0,0,0.04); }
+.htSkeletonImg { height: 180px; background: linear-gradient(90deg, #f3f4f6 25%, #ecedf0 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.htSkeletonBody { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.htSkeletonLine { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #f3f4f6 25%, #ecedf0 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-.htGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+/* ── Hotel Empty State ────────────────────────────────────────────────────── */
+
+.htEmptyState {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 64px 32px; color: #ccc;
+}
+.htEmptyState h3 { font-size: 1.15rem; font-weight: 700; color: var(--isa-black); margin: 16px 0 8px; font-family: var(--font-sans); text-transform: none; letter-spacing: 0; }
+.htEmptyState p { font-size: 0.9rem; color: #999; max-width: 360px; line-height: 1.5; }
+
+/* ── Hotel Results ────────────────────────────────────────────────────────── */
+
+.htResultsBar { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+.htResultsCount { font-size: 0.9rem; font-weight: 700; color: var(--isa-black); }
+.htResultsCity { font-size: 0.85rem; color: #999; }
+
+.htGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
 .htCard {
-    border-radius: 16px; overflow: hidden; background: white;
-    border: 1px solid rgba(0,0,0,0.04); transition: all 0.25s ease; cursor: pointer;
+    border-radius: 14px; overflow: hidden; background: white;
+    border: 1px solid rgba(0,0,0,0.05); transition: all 0.3s ease; cursor: pointer;
 }
-.htCard:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.08); }
+.htCard:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
 
 .htCardImage { height: 180px; background-size: cover; background-position: center; }
 .htCardImagePlaceholder {
-    height: 180px; background: #f6f7f9; display: flex; align-items: center;
-    justify-content: center; color: #ccc;
+    height: 180px; background: #f3f4f6; display: flex; align-items: center;
+    justify-content: center; color: #d0d0d0;
 }
 
-.htCardBody { padding: 16px; }
-.htCardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.htCardName { font-size: 0.95rem; font-weight: 700; color: var(--isa-black); line-height: 1.3; font-family: var(--font-sans); text-transform: none; letter-spacing: 0; }
-.htStars { display: flex; align-items: center; gap: 3px; color: #f5a623; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+.htCardBody { padding: 16px 16px 18px; }
 
-.htCardAddr { font-size: 0.8rem; color: #888; margin-bottom: 8px; line-height: 1.4; }
+.htCardName {
+    font-size: 1rem; font-weight: 700; color: var(--isa-black); line-height: 1.3;
+    font-family: var(--font-sans); text-transform: none; letter-spacing: 0;
+    margin-bottom: 6px;
+}
+
+.htCardMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.htStars { display: flex; align-items: center; gap: 3px; color: #f5a623; font-size: 0.78rem; font-weight: 600; flex-shrink: 0; }
+.htCardAddr { font-size: 0.78rem; color: #aaa; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
 .htTags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .htTag {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; background: rgba(39,174,96,0.06); color: #27ae60;
-    border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+    padding: 3px 8px; background: rgba(39,174,96,0.06); color: #27ae60;
+    border-radius: 100px; font-size: 0.7rem; font-weight: 600;
 }
+.htTagGreen { composes: htTag; }
 
-.htCardBottom { display: flex; align-items: baseline; justify-content: space-between; }
-.htPriceBlock { display: flex; align-items: baseline; gap: 6px; }
-.htPrice { font-size: 1.15rem; font-weight: 700; color: var(--isa-black); }
-.htPricePer { font-size: 0.8rem; color: #999; }
-.htNoPrice { font-size: 0.85rem; color: #999; }
+.htCardPrice { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.htPrice { font-size: 1.2rem; font-weight: 700; color: var(--isa-black); }
+.htPricePer { font-size: 0.78rem; color: #bbb; }
+.htTotalLabel { font-size: 0.75rem; color: #bbb; margin-left: auto; }
+.htNoPrice { font-size: 0.85rem; color: #bbb; font-style: italic; }
 
-.htDestGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+/* ── Hotel Destinations ───────────────────────────────────────────────────── */
+
+.htQuickChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.htQuickChip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 18px; background: white; border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 100px; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; font-family: var(--font-sans); color: var(--isa-charcoal);
+}
+.htQuickChip:hover { border-color: var(--isa-red); color: var(--isa-red); transform: translateY(-1px); }
+
+.htDestGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px; }
 .htDestCard {
-    position: relative; border-radius: 20px; overflow: hidden; cursor: pointer;
-    height: 200px; transition: transform 0.3s ease;
+    position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
+    height: 180px; transition: transform 0.3s ease;
 }
-.htDestCard:hover { transform: translateY(-4px); }
+.htDestCard:hover { transform: translateY(-3px); }
 .htDestPhoto { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 0.4s ease; }
 .htDestCard:hover .htDestPhoto { transform: scale(1.05); }
 .htDestOverlay {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.65));
     color: white;
 }
-.htDestOverlay h4 { font-size: 1.3rem; font-family: var(--font-heading); margin-bottom: 2px; }
-.htDestOverlay span { font-size: 0.85rem; opacity: 0.8; }
+.htDestOverlay h4 { font-size: 1.15rem; font-weight: 700; font-family: var(--font-sans); text-transform: none; letter-spacing: 0; margin-bottom: 2px; }
+.htDestOverlay span { font-size: 0.8rem; opacity: 0.75; }
 
-.htTrustBar { display: flex; flex-wrap: wrap; gap: 24px; }
-.htTrustItem { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #666; font-weight: 500; }
+.htTrustBar { display: flex; flex-wrap: wrap; gap: 28px; padding: 16px 0; }
+.htTrustItem { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #888; font-weight: 500; }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    FLIGHTS & HOTELS MOBILE ADJUSTMENTS
@@ -1694,9 +1746,13 @@
     .ftBookBar { flex-direction: column; gap: 16px; text-align: center; }
     .ftBookRight { flex-direction: column; align-items: stretch; gap: 12px; }
     .htSearchGrid { grid-template-columns: 1fr; }
+    .htGuestControl { flex-wrap: wrap; }
     .htGrid { grid-template-columns: 1fr; }
+    .htSkeletonGrid { grid-template-columns: 1fr; }
     .htDestGrid { grid-template-columns: 1fr; }
     .htTrustBar { flex-direction: column; gap: 12px; }
+    .htQuickChips { gap: 6px; }
+    .htCardAddr { max-width: 100%; }
 
     .welcomeBanner { padding: 28px 20px; }
     .welcomeBannerTitle { font-size: 1.5rem; }

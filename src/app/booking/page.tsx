@@ -1,6 +1,6 @@
 'use client';
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plane, Compass, User, Hotel, Loader2, ArrowLeft } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import styles from './booking.module.css';
@@ -531,10 +531,12 @@ const AirportSearchInput = ({ value, onChange, placeholder }: { value: string; o
 // MAIN BOOKING COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function Booking() {
+function BookingInner() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [step, setStep] = useState(0);
     const [bookingMode, setBookingMode] = useState<'' | 'self' | 'agent'>('');
+    const [prefilledBookKey, setPrefilledBookKey] = useState('');
 
     // ── Self-service state ─────────────────────────────────────────────────
     const [origin, setOrigin] = useState('');
@@ -597,6 +599,37 @@ export default function Booking() {
         }
         return num;
     }, []);
+
+    // Pre-fill from dashboard: skip straight to checkout if URL has booking params
+    useEffect(() => {
+        const bookKey = searchParams.get('bookKey');
+        const price = searchParams.get('price');
+        const currency = searchParams.get('currency');
+        const orig = searchParams.get('origin');
+        const dest = searchParams.get('destination');
+
+        if (bookKey && price && orig && dest) {
+            setPrefilledBookKey(bookKey);
+            setOrigin(orig);
+            setDestination(dest);
+            setBookingMode('self');
+            setSelectedFlight({
+                id: 'prefilled',
+                reviewKey: '',
+                outbound: {
+                    segments: [], departAirport: orig, arriveAirport: dest,
+                    departTime: '', arriveTime: '', departDate: '', arriveDate: '',
+                    duration: '', stops: 0, carrier: '', carrierName: '',
+                },
+                price: parseFloat(price) || 0,
+                currency: currency || 'CAD',
+                carrier: '', carrierName: 'Selected Flight',
+                carrierLogo: '',
+            });
+            setAdults(1);
+            setStep(3);
+        }
+    }, [searchParams]);
 
     // Clear return date if departure moves past it
     useEffect(() => {
@@ -716,17 +749,18 @@ export default function Booking() {
             const mainTraveler = travelers[0];
             if (!mainTraveler?.firstName || !mainTraveler?.lastName) throw new Error('Traveler details incomplete');
 
-            // Step 1: Review flight → get bookKey
-            const reviewRes = await fetch('/api/farenexus/review', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reviewKey: selectedFlight.reviewKey }),
-            });
-            const reviewData = await reviewRes.json();
-            if (!reviewRes.ok) throw new Error(reviewData.error || 'Flight review failed');
-
-            const bookKey = reviewData.bookKey ?? reviewData.book_key ?? reviewData.data?.bookKey ?? '';
-            if (!bookKey) throw new Error('Could not retrieve booking key from review');
+            let bookKey = prefilledBookKey;
+            if (!bookKey && selectedFlight.reviewKey) {
+                const reviewRes = await fetch('/api/farenexus/review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reviewKey: selectedFlight.reviewKey }),
+                });
+                const reviewData = await reviewRes.json();
+                if (!reviewRes.ok) throw new Error(reviewData.error || 'Flight review failed');
+                bookKey = reviewData.bookKey ?? reviewData.book_key ?? reviewData.data?.bookKey ?? '';
+            }
+            if (!bookKey) throw new Error('Could not retrieve booking key');
 
             // Step 2: Book flight
             const bookRes = await fetch('/api/farenexus/book', {
@@ -1172,8 +1206,26 @@ export default function Booking() {
             case 3:
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
-                        <div className={styles.stepLabel}>STEP 03/{String(SELF_TOTAL).padStart(2, '0')}</div>
+                        {prefilledBookKey ? (
+                            <div className={styles.stepLabel}>CHECKOUT</div>
+                        ) : (
+                            <div className={styles.stepLabel}>STEP 03/{String(SELF_TOTAL).padStart(2, '0')}</div>
+                        )}
                         <h2 className={styles.question}>Traveler Details</h2>
+
+                        {/* Flight summary when coming from dashboard */}
+                        {selectedFlight && prefilledBookKey && (
+                            <div className={styles.reviewCard} style={{ marginBottom: '24px' }}>
+                                <div className={styles.reviewCardHeader}><Plane size={20} strokeWidth={1.5} /><span>Your Selected Flight</span></div>
+                                <div className={styles.reviewCardBody}>
+                                    <div className={styles.reviewRow}>
+                                        <span className={styles.reviewBold}>{selectedFlight.outbound.departAirport} → {selectedFlight.outbound.arriveAirport}</span>
+                                        <span className={styles.reviewBold}>{formatPrice(selectedFlight.price, selectedFlight.currency)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <p className={styles.questionSub}>Enter details for {travelers.length} traveler{travelers.length !== 1 ? 's' : ''} as shown on government ID.</p>
 
                         {travelers.map((t, i) => (
@@ -1208,7 +1260,7 @@ export default function Booking() {
                         ))}
 
                         <div className={styles.actions} style={{ marginTop: '32px' }}>
-                            <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
+                            <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(2)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
                             <button className="geometric-btn" onClick={() => setStep(4)} disabled={!allTravelersValid}
                                 style={{ flex: 1, opacity: allTravelersValid ? 1 : 0.5, pointerEvents: allTravelersValid ? 'auto' : 'none' }}>
                                 Review Booking
@@ -1352,5 +1404,13 @@ export default function Booking() {
                 {renderStep()}
             </div>
         </main>
+    );
+}
+
+export default function Booking() {
+    return (
+        <Suspense>
+            <BookingInner />
+        </Suspense>
     );
 }

@@ -78,7 +78,7 @@ export default function StaysPage() {
             <div className={styles.content}>
                 <div className={styles.pageHeader}><h1 className={styles.pageTitle}>Find a Stay</h1><p className={styles.pageSub}>Search hotels worldwide with real-time pricing.</p></div>
 
-                <div className={styles.searchCard}>
+                <div className={`${styles.searchCard} ${loading ? styles.fadeOut : ''}`}>
                     <div className={styles.searchGrid}>
                         <div><label className={styles.label}>Destination</label><div className={styles.inputWrap}><MapPin size={16} className={styles.inputIcon} /><input type="text" className={styles.input} placeholder="City or hotel name" value={dest} onChange={e => setDest(e.target.value)} /></div></div>
                         <div><label className={styles.label}>Check-in</label><input type="date" className={styles.dateInput} value={checkin} min={today} onChange={e => setCheckin(e.target.value)} /></div>
@@ -116,11 +116,11 @@ export default function StaysPage() {
                 )}
 
                 {!searched && !loading && (
-                    <>
+                    <div className={loading ? styles.fadeOut : ''}>
                         <div><h3 className={styles.sectionTitle}>Quick Search</h3><div className={styles.chips}>{QUICK.map(c => <button key={c.l} className={styles.chip} onClick={() => { setDest(c.l); setCountry(c.c); doSearch(c.l, c.c); }}><MapPin size={14} />{c.l}</button>)}</div></div>
                         <div><h3 className={styles.sectionTitle}>Popular Destinations</h3><div className={styles.destGrid}>{POPULAR.map(d => <div key={d.city} className={styles.destCard} onClick={() => { setDest(d.city); setCountry(d.code); doSearch(d.city, d.code); }}><div className={styles.destPhoto} style={{ backgroundImage: `url(${d.image})` }} /><div className={styles.destOverlay}><h4>{d.city}</h4><span>{d.country}</span></div><div className={styles.destPrice}>from ${d.avg}/night</div></div>)}</div></div>
                         <div className={styles.trustBar}><div className={styles.trustItem}><ShieldCheck size={18} /><span>Free cancellation on most rooms</span></div><div className={styles.trustItem}><Coffee size={18} /><span>Breakfast details shown upfront</span></div><div className={styles.trustItem}><Star size={18} /><span>Verified guest ratings</span></div></div>
-                    </>
+                    </div>
                 )}
             </div>
         </div>

@@ -197,7 +197,7 @@ export default function FlightsPage() {
                 </div>
 
                 {/* Search */}
-                <div className={styles.searchCard}>
+                <div className={`${styles.searchCard} ${loading ? styles.fadeOut : ''}`}>
                     <div className={styles.tripToggle}>
                         <button className={`${styles.toggleBtn} ${tripType === 'RT' ? styles.toggleActive : ''}`} onClick={() => setTripType('RT')}>Round Trip</button>
                         <button className={`${styles.toggleBtn} ${tripType === 'OW' ? styles.toggleActive : ''}`} onClick={() => setTripType('OW')}>One Way</button>
@@ -266,7 +266,7 @@ export default function FlightsPage() {
                 )}
 
                 {!searched && !loading && (
-                    <div className={styles.card}><h3 className={styles.preTitle}>Popular Routes</h3>
+                    <div className={`${styles.card} ${loading ? styles.fadeOut : ''}`}><h3 className={styles.preTitle}>Popular Routes</h3>
                         <div className={styles.chips}>
                             <button className={styles.chip} onClick={() => { setOrigin('YUL'); setDest('YVR'); }}>YUL → YVR</button>
                             <button className={styles.chip} onClick={() => { setOrigin('YYZ'); setDest('YVR'); }}>YYZ → YVR</button>

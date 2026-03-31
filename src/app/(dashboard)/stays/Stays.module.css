@@ -1,10 +1,12 @@
+.fadeOut { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+
 .page { display: flex; flex-direction: column; width: 100%; }
 .content { padding: 32px 48px 48px; display: flex; flex-direction: column; gap: 28px; }
 .pageHeader { margin-bottom: 4px; }
 .pageTitle { font-size: 1.8rem; color: var(--isa-black); font-family: var(--font-heading); line-height: 1; margin-bottom: 8px; }
 .pageSub { font-size: 1rem; color: #666; }
 
-.searchCard { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border-radius: 24px; padding: 28px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.03); }
+.searchCard { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border-radius: 24px; padding: 28px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.03); transition: opacity 0.3s ease; }
 .searchGrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 6px; }
 .inputWrap { position: relative; }

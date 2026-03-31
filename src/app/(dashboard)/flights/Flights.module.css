@@ -1,3 +1,5 @@
+.fadeOut { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+
 .page { display: flex; flex-direction: column; width: 100%; }
 .content { padding: 32px 48px 48px; display: flex; flex-direction: column; gap: 24px; }
 .pageHeader { margin-bottom: 8px; }
@@ -5,7 +7,7 @@
 .pageSub { font-size: 1rem; color: #666; }
 
 /* Search Card */
-.searchCard { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border-radius: 24px; padding: 28px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.03); overflow: visible; }
+.searchCard { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border-radius: 24px; padding: 28px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.03); overflow: visible; transition: opacity 0.3s ease; }
 .tripToggle { display: flex; gap: 8px; margin-bottom: 20px; }
 .toggleBtn { padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: #f6f7f9; color: #666; border: none; cursor: pointer; transition: all 0.2s; }
 .toggleBtn:hover { color: var(--isa-black); }
@@ -125,7 +127,7 @@
 .bookBtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; padding: 14px 32px; background: var(--isa-red); color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; }
 .bookBtn:hover { background: var(--isa-black); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
 
-.card { background: rgba(255,255,255,0.6); backdrop-filter: blur(20px); padding: 28px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.4); }
+.card { background: rgba(255,255,255,0.6); backdrop-filter: blur(20px); padding: 28px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.4); transition: opacity 0.3s ease; }
 
 @media (max-width: 768px) {
     .content { padding: 24px 16px; }

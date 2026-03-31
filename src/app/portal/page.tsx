@@ -922,7 +922,7 @@ export default function Portal() {
                                 </div>
                                 <div className={styles.quickActionCard} onClick={() => router.push('/booking')}>
                                     <Car size={22} strokeWidth={1.5} />
-                                    <span>Full Booking</span>
+                                    <span>Agent Assisted</span>
                                 </div>
                                 <div className={styles.quickActionCard} onClick={() => setIsContactOpen(true)}>
                                     <PhoneCall size={22} strokeWidth={1.5} />
@@ -1657,10 +1657,21 @@ export default function Portal() {
                     checkout={hotelCheckout}
                     rates={extractRoomRates(detailHotel.hotelId)}
                     onClose={() => setDetailHotel(null)}
-                    onSelectRate={(rate) => {
-                        try { sessionStorage.setItem('selected_hotel_rate', JSON.stringify({ ...rate, hotelName: detailHotel.name, hotelId: detailHotel.hotelId })); } catch { /* */ }
-                        setDetailHotel(null);
-                        router.push('/booking');
+                    enableCheckout={true}
+                    onBookingComplete={(data) => {
+                        try {
+                            const existing = JSON.parse(localStorage.getItem('isa_itineraries') || '[]');
+                            existing.unshift({
+                                id: `itin-${Date.now()}`,
+                                createdAt: new Date().toISOString(),
+                                status: 'confirmed',
+                                travelers: [],
+                                flight: null,
+                                hotel: { name: data.hotelName, checkin: data.checkin, checkout: data.checkout, price: data.price, currency: data.currency },
+                            });
+                            localStorage.setItem('isa_itineraries', JSON.stringify(existing));
+                            setItineraries(existing);
+                        } catch { /* */ }
                     }}
                 />
             )}

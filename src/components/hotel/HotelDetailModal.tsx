@@ -22,6 +22,10 @@ interface RoomRate {
     remarks: string;
 }
 
+interface SavedTraveler {
+    id: string; firstName: string; lastName: string; email: string; phone: string;
+}
+
 interface Props {
     hotelId: string;
     hotelName: string;
@@ -32,11 +36,31 @@ interface Props {
     checkout: string;
     rates: RoomRate[];
     onClose: () => void;
-    onSelectRate: (rate: RoomRate) => void;
+    onSelectRate?: (rate: RoomRate) => void;
+    enableCheckout?: boolean;
+    onBookingComplete?: (bookingData: { hotelName: string; checkin: string; checkout: string; price: number; currency: string; roomName: string }) => void;
 }
 
-export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, hotelAddress, checkin, checkout, rates, onClose, onSelectRate }: Props) {
+export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, hotelAddress, checkin, checkout, rates, onClose, onSelectRate, enableCheckout = false, onBookingComplete }: Props) {
     const [activeTab, setActiveTab] = useState<'rooms' | 'photos' | 'amenities' | 'reviews'>('rooms');
+
+    // Checkout state
+    const [selectedRate, setSelectedRate] = useState<RoomRate | null>(null);
+    const [checkoutStep, setCheckoutStep] = useState<'select' | 'guest' | 'processing' | 'success' | 'error'>('select');
+    const [guestFirstName, setGuestFirstName] = useState('');
+    const [guestLastName, setGuestLastName] = useState('');
+    const [guestEmail, setGuestEmail] = useState('');
+    const [savedTravelers, setSavedTravelers] = useState<SavedTraveler[]>([]);
+    const [bookingError, setBookingError] = useState('');
+    const [bookingId, setBookingId] = useState('');
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = localStorage.getItem('isa_travelers');
+            if (raw) setSavedTravelers(JSON.parse(raw));
+        } catch { /* */ }
+    }, []);
     const [hotelDetail, setHotelDetail] = useState<HotelData | null>(null);
     const [reviews, setReviews] = useState<ReviewData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -87,6 +111,62 @@ export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, h
         const a = new Date(checkin), b = new Date(checkout);
         return Math.max(1, Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)));
     })();
+
+    const handleSelectRoom = (rate: RoomRate) => {
+        if (enableCheckout) {
+            setSelectedRate(rate);
+            setCheckoutStep('guest');
+        } else if (onSelectRate) {
+            onSelectRate(rate);
+        }
+    };
+
+    const handleConfirmBooking = async () => {
+        if (!selectedRate || !guestFirstName.trim() || !guestLastName.trim() || !guestEmail.trim()) return;
+        setCheckoutStep('processing');
+        setBookingError('');
+
+        try {
+            const prebookRes = await fetch('/api/hotels/prebook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ offerId: selectedRate.offerId }),
+            });
+            const prebookData = await prebookRes.json();
+            if (!prebookRes.ok) throw new Error(prebookData.error || 'Prebook failed');
+
+            const prebookId = prebookData.data?.prebookId ?? prebookData.prebookId ?? '';
+            if (!prebookId) throw new Error('Could not get prebook ID');
+
+            const bookRes = await fetch('/api/hotels/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prebookId,
+                    guestInfo: { firstName: guestFirstName.trim(), lastName: guestLastName.trim(), email: guestEmail.trim() },
+                    payment: { method: 'ACC_CREDIT_CARD' },
+                }),
+            });
+            const bookData = await bookRes.json();
+            if (!bookRes.ok) throw new Error(bookData.error || 'Booking failed');
+
+            setBookingId(bookData.data?.bookingId ?? '');
+            setCheckoutStep('success');
+
+            if (onBookingComplete) {
+                onBookingComplete({
+                    hotelName,
+                    checkin, checkout,
+                    price: selectedRate.price,
+                    currency: selectedRate.currency,
+                    roomName: selectedRate.roomName,
+                });
+            }
+        } catch (err) {
+            setBookingError(err instanceof Error ? err.message : 'Booking failed');
+            setCheckoutStep('error');
+        }
+    };
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -150,7 +230,7 @@ export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, h
                                     <div className={styles.roomPrice}>
                                         <span className={styles.priceValue}>${rate.price.toFixed(0)}</span>
                                         <span className={styles.priceLabel}>{nights > 1 ? `${nights} nights` : 'per night'}</span>
-                                        <button className={styles.selectBtn} onClick={() => onSelectRate(rate)}>Select Room</button>
+                                        <button className={styles.selectBtn} onClick={() => handleSelectRoom(rate)}>Select Room</button>
                                     </div>
                                 </div>
                             ))}
@@ -258,6 +338,97 @@ export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, h
                         )
                     )}
                 </div>
+
+                {/* Checkout Overlay */}
+                {enableCheckout && checkoutStep !== 'select' && (
+                    <div className={styles.checkoutOverlay}>
+                        {checkoutStep === 'guest' && selectedRate && (
+                            <div className={styles.checkoutContent}>
+                                <button className={styles.checkoutBack} onClick={() => setCheckoutStep('select')}>
+                                    ← Back to rooms
+                                </button>
+                                <h3 className={styles.checkoutTitle}>Complete Your Booking</h3>
+                                <div className={styles.checkoutSummary}>
+                                    <div className={styles.checkoutHotel}>{hotelName}</div>
+                                    <div className={styles.checkoutRoom}>{selectedRate.roomName} · {selectedRate.boardName}</div>
+                                    <div className={styles.checkoutDates}>
+                                        {new Date(checkin + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {new Date(checkout + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {nights} night{nights !== 1 ? 's' : ''}
+                                    </div>
+                                    <div className={styles.checkoutPrice}>${selectedRate.price.toFixed(2)} {selectedRate.currency}</div>
+                                </div>
+
+                                {savedTravelers.length > 0 && !guestFirstName && (
+                                    <div className={styles.checkoutTravelers}>
+                                        <label className={styles.checkoutLabel}>Select a Traveler</label>
+                                        <div className={styles.checkoutTravelerChips}>
+                                            {savedTravelers.map(t => (
+                                                <button key={t.id} className={styles.checkoutTravelerChip} onClick={() => { setGuestFirstName(t.firstName); setGuestLastName(t.lastName); setGuestEmail(t.email); }}>
+                                                    {t.firstName} {t.lastName}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className={styles.checkoutDivider}><span>or enter manually</span></div>
+                                    </div>
+                                )}
+
+                                <div className={styles.checkoutForm}>
+                                    <div className={styles.checkoutRow}>
+                                        <div className={styles.checkoutField}>
+                                            <label className={styles.checkoutLabel}>First Name</label>
+                                            <input type="text" className={styles.checkoutInput} value={guestFirstName} onChange={(e) => setGuestFirstName(e.target.value)} placeholder="First name" />
+                                        </div>
+                                        <div className={styles.checkoutField}>
+                                            <label className={styles.checkoutLabel}>Last Name</label>
+                                            <input type="text" className={styles.checkoutInput} value={guestLastName} onChange={(e) => setGuestLastName(e.target.value)} placeholder="Last name" />
+                                        </div>
+                                    </div>
+                                    <div className={styles.checkoutField}>
+                                        <label className={styles.checkoutLabel}>Email</label>
+                                        <input type="email" className={styles.checkoutInput} value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="email@example.com" />
+                                    </div>
+                                </div>
+
+                                <button
+                                    className={styles.confirmBtn}
+                                    onClick={handleConfirmBooking}
+                                    disabled={!guestFirstName.trim() || !guestLastName.trim() || !guestEmail.trim()}
+                                    style={{ opacity: (guestFirstName.trim() && guestLastName.trim() && guestEmail.trim()) ? 1 : 0.5 }}
+                                >
+                                    Confirm Booking · ${selectedRate.price.toFixed(0)}
+                                </button>
+                            </div>
+                        )}
+
+                        {checkoutStep === 'processing' && (
+                            <div className={styles.checkoutCenter}>
+                                <Loader2 size={40} className={styles.spinner} />
+                                <h3>Confirming your reservation...</h3>
+                                <p>Please wait while we secure your room.</p>
+                            </div>
+                        )}
+
+                        {checkoutStep === 'success' && (
+                            <div className={styles.checkoutCenter}>
+                                <div className={styles.successIcon}>
+                                    <ShieldCheck size={32} />
+                                </div>
+                                <h3>Booking Confirmed!</h3>
+                                <p>{hotelName} — {selectedRate?.roomName}</p>
+                                {bookingId && <p className={styles.bookingRef}>Ref: {bookingId}</p>}
+                                <button className={styles.confirmBtn} onClick={onClose} style={{ marginTop: '20px' }}>Done</button>
+                            </div>
+                        )}
+
+                        {checkoutStep === 'error' && (
+                            <div className={styles.checkoutCenter}>
+                                <div className={styles.errorIcon}><X size={32} /></div>
+                                <h3>Booking Failed</h3>
+                                <p>{bookingError || 'Something went wrong. Please try again.'}</p>
+                                <button className={styles.confirmBtn} onClick={() => setCheckoutStep('guest')} style={{ marginTop: '20px' }}>Try Again</button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

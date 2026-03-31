@@ -1,7 +1,7 @@
 .page { display: flex; flex-direction: column; width: 100%; }
 .content { padding: 32px 48px 48px; display: flex; flex-direction: column; gap: 24px; }
 .pageHeader { margin-bottom: 8px; }
-.pageTitle { font-size: 2.2rem; color: var(--isa-black); font-family: var(--font-heading); line-height: 1; margin-bottom: 8px; }
+.pageTitle { font-size: 1.8rem; color: var(--isa-black); font-family: var(--font-heading); line-height: 1; margin-bottom: 8px; }
 .pageSub { font-size: 1rem; color: #666; }
 
 /* Search Card */
@@ -19,7 +19,7 @@
 .paxBtn { width: 36px; height: 36px; border-radius: 50%; background: #f6f7f9; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 600; color: var(--isa-black); cursor: pointer; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s; }
 .paxBtn:hover { background: #eee; }
 .paxCount { font-size: 0.95rem; font-weight: 600; color: var(--isa-black); min-width: 20px; text-align: center; }
-.searchBtn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; background: var(--isa-red); color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border: none; cursor: pointer; transition: all 0.3s; margin-left: auto; }
+.searchBtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: auto; padding: 14px 32px; background: var(--isa-red); color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; margin-left: auto; }
 .searchBtn:hover { background: var(--isa-black); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
 .searchBtn:disabled { opacity: 0.5; pointer-events: none; }
 
@@ -59,11 +59,11 @@
 .calDayEmpty { padding: 8px; }
 
 /* Loading */
-.loadingOverlay { display: flex; justify-content: center; padding: 48px 0; }
-.loadingModal { text-align: center; padding: 48px; background: white; border-radius: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.08); max-width: 360px; width: 100%; }
+.loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.2s ease; }
+.loadingModal { text-align: center; padding: 48px; background: white; border-radius: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.08); max-width: 360px; width: 100%; border: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; align-items: center; }
 .loadingModal h3 { font-size: 1.1rem; color: var(--isa-black); margin: 16px 0 8px; font-family: var(--font-sans); text-transform: none; letter-spacing: 0; }
 .loadingModal p { color: #888; font-size: 0.9rem; margin-bottom: 24px; }
-.loadingBar { height: 3px; background: #f0f0f0; border-radius: 2px; overflow: hidden; position: relative; }
+.loadingBar { height: 3px; background: #f0f0f0; border-radius: 2px; overflow: hidden; position: relative; width: 100%; }
 .loadingBar::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 40%; background: var(--isa-red); border-radius: 2px; animation: loadSlide 1.5s ease-in-out infinite; }
 @keyframes loadSlide { 0% { left: -40%; } 100% { left: 100%; } }
 .spin { animation: spin 1s linear infinite; }
@@ -82,7 +82,7 @@
 .flightCard { display: flex; align-items: center; gap: 20px; padding: 20px 24px; background: white; border-radius: 16px; border: 2px solid rgba(0,0,0,0.03); cursor: pointer; transition: all 0.25s ease; position: relative; }
 .flightCard:hover { border-color: rgba(0,0,0,0.08); box-shadow: 0 8px 24px rgba(0,0,0,0.04); transform: translateY(-2px); }
 .airline { display: flex; align-items: center; gap: 10px; min-width: 140px; }
-.airlineLogo { border-radius: 6px; object-fit: contain; }
+.airlineLogo { border-radius: 6px; object-fit: contain; width: 44px; height: 44px; }
 .airlineName { font-weight: 600; font-size: 0.9rem; color: var(--isa-black); }
 .legs { flex: 1; }
 .leg { display: flex; align-items: center; gap: 16px; }
@@ -122,7 +122,7 @@
 .modalSegMeta { display: flex; gap: 16px; font-size: 0.8rem; color: #888; }
 .modalFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
 .modalPrice { display: flex; flex-direction: column; }
-.bookBtn { display: flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--isa-red); color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border: none; cursor: pointer; transition: all 0.3s; }
+.bookBtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; padding: 14px 32px; background: var(--isa-red); color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; }
 .bookBtn:hover { background: var(--isa-black); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
 
 .card { background: rgba(255,255,255,0.6); backdrop-filter: blur(20px); padding: 28px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.4); }
@@ -131,11 +131,12 @@
     .content { padding: 24px 16px; }
     .searchGrid { grid-template-columns: 1fr; }
     .paxRow { flex-direction: column; align-items: stretch; }
-    .searchBtn { width: 100%; justify-content: center; }
+    .searchBtn { width: 100%; justify-content: center; margin-left: 0; }
     .flightCard { flex-direction: column; align-items: stretch; gap: 12px; }
     .airline { min-width: auto; }
     .price { text-align: left; }
-    .filterBar { flex-direction: column; }
-    .modal { padding: 24px; margin: 16px; }
+    .filterBar { flex-direction: column; align-items: stretch; }
+    .modal { padding: 24px; margin: 16px; max-height: 90vh; }
     .modalFooter { flex-direction: column; gap: 16px; }
+    .bookBtn { width: 100%; }
 }

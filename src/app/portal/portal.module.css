@@ -1589,6 +1589,24 @@
 .tGenderBtn:hover { background: #ecedf0; }
 .tGenderBtnActive { background: var(--isa-black); color: white; }
 
+.tToggleDetails {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--isa-charcoal);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    font-family: var(--font-sans);
+    transition: color 0.2s;
+}
+
+.tToggleDetails:hover { color: var(--isa-red); }
+
 .tFormActions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; padding-top: 20px; border-top: 1px solid rgba(0, 0, 0, 0.06); }
 
 .tCancelBtn {

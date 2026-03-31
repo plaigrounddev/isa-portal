@@ -574,6 +574,7 @@ export default function Portal() {
     const [travelers, setTravelers] = useState<Traveler[]>([]);
     const [isAddingTraveler, setIsAddingTraveler] = useState(false);
     const [editingTravelerId, setEditingTravelerId] = useState<string | null>(null);
+    const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [travelerForm, setTravelerForm] = useState<Omit<Traveler, 'id'>>({
         firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '',
         gender: '', email: '', phone: '', nationality: '',
@@ -626,12 +627,14 @@ export default function Portal() {
             dateOfBirth: t.dateOfBirth, gender: t.gender, email: t.email,
             phone: t.phone, nationality: t.nationality,
         });
+        setShowMoreDetails(!!(t.dateOfBirth || t.gender || t.phone || t.nationality));
         setIsAddingTraveler(true);
     };
 
     const resetTravelerForm = () => {
         setIsAddingTraveler(false);
         setEditingTravelerId(null);
+        setShowMoreDetails(false);
         setTravelerForm({ firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '', gender: '', email: '', phone: '', nationality: '' });
     };
 
@@ -672,7 +675,11 @@ export default function Portal() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSignOut = () => {
-        if (typeof window !== 'undefined') localStorage.removeItem('isa_user');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('isa_user');
+            localStorage.removeItem('isa_travelers');
+            try { sessionStorage.clear(); } catch { /* */ }
+        }
         router.push('/');
     };
 
@@ -1334,46 +1341,55 @@ export default function Portal() {
                                     </div>
                                 </div>
 
-                                <div className={styles.tFormGroup}>
-                                    <label className={styles.tFormLabel}>Role *</label>
-                                    <div className={styles.tRoleRow}>
-                                        {TRAVELER_ROLES.map(r => (
-                                            <button key={r.value} className={`${styles.tRoleChip} ${travelerForm.role === r.value ? styles.tRoleChipActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, role: r.value as Traveler['role'] })}>
-                                                {r.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
                                 <div className={styles.tFormGrid}>
                                     <div className={styles.tFormGroup}>
-                                        <label className={styles.tFormLabel}>Date of Birth</label>
-                                        <input type="date" className={styles.tFormInput} value={travelerForm.dateOfBirth} onChange={(e) => setTravelerForm({ ...travelerForm, dateOfBirth: e.target.value })} />
-                                    </div>
-                                    <div className={styles.tFormGroup}>
-                                        <label className={styles.tFormLabel}>Gender</label>
-                                        <div className={styles.tGenderRow}>
-                                            <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'M' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'M' })}>Male</button>
-                                            <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'F' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'F' })}>Female</button>
+                                        <label className={styles.tFormLabel}>Role *</label>
+                                        <div className={styles.tRoleRow}>
+                                            {TRAVELER_ROLES.map(r => (
+                                                <button key={r.value} className={`${styles.tRoleChip} ${travelerForm.role === r.value ? styles.tRoleChipActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, role: r.value as Traveler['role'] })}>
+                                                    {r.label}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className={styles.tFormGrid}>
                                     <div className={styles.tFormGroup}>
                                         <label className={styles.tFormLabel}>Email</label>
                                         <input type="email" className={styles.tFormInput} placeholder="email@example.com" value={travelerForm.email} onChange={(e) => setTravelerForm({ ...travelerForm, email: e.target.value })} />
                                     </div>
-                                    <div className={styles.tFormGroup}>
-                                        <label className={styles.tFormLabel}>Phone</label>
-                                        <input type="tel" className={styles.tFormInput} placeholder="+1 (234) 567-8900" value={travelerForm.phone} onChange={(e) => setTravelerForm({ ...travelerForm, phone: e.target.value })} />
-                                    </div>
                                 </div>
 
-                                <div className={styles.tFormGroup}>
-                                    <label className={styles.tFormLabel}>Nationality</label>
-                                    <input type="text" className={styles.tFormInput} placeholder="e.g. US, CA, GB" value={travelerForm.nationality} onChange={(e) => setTravelerForm({ ...travelerForm, nationality: e.target.value })} style={{ maxWidth: '200px' }} />
-                                </div>
+                                <button type="button" className={styles.tToggleDetails} onClick={() => setShowMoreDetails(!showMoreDetails)}>
+                                    {showMoreDetails ? 'Hide' : 'Show'} Additional Details
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: showMoreDetails ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9" /></svg>
+                                </button>
+
+                                {showMoreDetails && (
+                                    <>
+                                        <div className={styles.tFormGrid}>
+                                            <div className={styles.tFormGroup}>
+                                                <label className={styles.tFormLabel}>Date of Birth</label>
+                                                <input type="date" className={styles.tFormInput} value={travelerForm.dateOfBirth} onChange={(e) => setTravelerForm({ ...travelerForm, dateOfBirth: e.target.value })} />
+                                            </div>
+                                            <div className={styles.tFormGroup}>
+                                                <label className={styles.tFormLabel}>Gender</label>
+                                                <div className={styles.tGenderRow}>
+                                                    <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'M' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'M' })}>Male</button>
+                                                    <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'F' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'F' })}>Female</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.tFormGrid}>
+                                            <div className={styles.tFormGroup}>
+                                                <label className={styles.tFormLabel}>Phone</label>
+                                                <input type="tel" className={styles.tFormInput} placeholder="+1 (234) 567-8900" value={travelerForm.phone} onChange={(e) => setTravelerForm({ ...travelerForm, phone: e.target.value })} />
+                                            </div>
+                                            <div className={styles.tFormGroup}>
+                                                <label className={styles.tFormLabel}>Nationality</label>
+                                                <input type="text" className={styles.tFormInput} placeholder="e.g. US, CA, GB" value={travelerForm.nationality} onChange={(e) => setTravelerForm({ ...travelerForm, nationality: e.target.value })} />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className={styles.tFormActions}>
                                     <button className={styles.tCancelBtn} onClick={resetTravelerForm}>Cancel</button>
@@ -1463,7 +1479,7 @@ export default function Portal() {
         <main className={styles.portalLayout}>
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarTop}>
-                    <div className={styles.logo} onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+                    <div className={styles.logo} onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer' }}>
                         ISA<span>.</span>TRAVEL
                     </div>
                     <nav className={styles.nav}>

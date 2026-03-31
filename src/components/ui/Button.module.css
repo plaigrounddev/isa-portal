@@ -1,0 +1,76 @@
+.base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    transition: all var(--transition-smooth);
+    border-radius: var(--radius-pill);
+    outline: none;
+    border: 1px solid transparent;
+    gap: var(--spacing-sm);
+}
+
+.base:active {
+    transform: scale(0.95);
+    transition: all var(--transition-fast);
+}
+
+/* 1. Fully rounded pill with no icons */
+.pill {
+    background-color: var(--text-primary);
+    color: var(--bg-secondary);
+    padding: 14px 28px;
+    font-size: 15px;
+}
+
+.pill:hover {
+    background-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 2. Light border button, no inner fill, no icon */
+.outline {
+    padding: 13px 27px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    backdrop-filter: var(--glass-backdrop);
+}
+
+.outline:hover {
+    background-color: var(--glass-bg);
+    border-color: rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .outline:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 3. Icon only fully circle button */
+.icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-pill);
+    background-color: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    color: var(--text-primary);
+    border: var(--card-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.icon-circle:hover {
+    background-color: var(--text-primary);
+    color: var(--bg-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

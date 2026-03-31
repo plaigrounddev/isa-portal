@@ -282,6 +282,22 @@ export interface HotelListResponse {
 // CAR RENTALS
 // ═══════════════════════════════════════════════════════════════════════════
 
+export interface CarBookingParams {
+  pickUpLocation: string;
+  returnLocation?: string;
+  pickUpDateTime: string;
+  returnDateTime: string;
+  vehicleType: string;
+  vendorCode: string;
+  rateCode?: string;
+  passenger: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+}
+
 export interface CarSearchParams {
   pickUpLocation: string; // IATA code
   returnLocation?: string;

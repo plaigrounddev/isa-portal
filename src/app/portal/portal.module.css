@@ -1293,9 +1293,9 @@
 .ftLoadingBar::after {
     content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 40%;
     background: var(--isa-red); border-radius: 2px;
-    animation: ftLoadSlide 1.5s ease-in-out infinite;
+    animation: ft-load-slide 1.5s ease-in-out infinite;
 }
-@keyframes ftLoadSlide { 0% { left: -40%; } 100% { left: 100%; } }
+@keyframes ft-load-slide { 0% { left: -40%; } 100% { left: 100%; } }
 
 .ftResultsHeader { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
 .ftResultsHeader h3 { font-size: 1rem; font-weight: 700; color: var(--isa-black); font-family: var(--font-sans); text-transform: none; letter-spacing: 0; }

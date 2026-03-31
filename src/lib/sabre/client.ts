@@ -45,7 +45,7 @@ export async function sabreRequest<T = unknown>(
       return await fetch(url, {
         method,
         headers: reqHeaders,
-        body: body ? JSON.stringify(body) : undefined,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
         signal: controller.signal,
       });
     } finally {

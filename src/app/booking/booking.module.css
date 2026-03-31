@@ -190,6 +190,7 @@
 }
 
 .tripTypeBtn:hover { background: #ecedf0; }
+.tripTypeBtn:focus-visible { outline: 2px solid var(--isa-black); outline-offset: -2px; }
 
 .tripTypeBtnActive {
     background: var(--isa-black);
@@ -197,6 +198,7 @@
 }
 
 .tripTypeBtnActive:hover { background: var(--isa-charcoal); }
+.tripTypeBtnActive:focus-visible { outline: 2px solid var(--isa-red); outline-offset: 2px; }
 
 /* Airport Autocomplete */
 .airportInputWrapper {
@@ -319,6 +321,7 @@
 }
 
 .paxBtn:hover { border-color: var(--isa-black); background: var(--isa-black); color: white; }
+.paxBtn:focus-visible { outline: 2px solid var(--isa-red); outline-offset: 2px; }
 
 .paxCount {
     font-size: 1.1rem;
@@ -710,6 +713,7 @@
 }
 
 .genderBtn:hover { background: #ecedf0; }
+.genderBtn:focus-visible { outline: 2px solid var(--isa-black); outline-offset: -2px; }
 
 .genderBtnActive {
     background: var(--isa-black);
@@ -717,6 +721,7 @@
 }
 
 .genderBtnActive:hover { background: var(--isa-charcoal); }
+.genderBtnActive:focus-visible { outline: 2px solid var(--isa-red); outline-offset: 2px; }
 
 .dobRow {
     display: grid;

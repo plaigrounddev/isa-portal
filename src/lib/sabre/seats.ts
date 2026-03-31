@@ -33,10 +33,15 @@ export async function getSeatsByReservation(params: SeatMapRequest) {
  * POST /v1/offers/getseats/bypnr
  */
 export async function getSeatsByPNR(pnrLocator: string) {
+  const normalizedPnr = pnrLocator.trim();
+  if (!normalizedPnr) {
+    throw new Error("pnrLocator is required");
+  }
+
   const body = {
     GetSeatsRQ: {
       version: "1",
-      PNRLocator: pnrLocator,
+      PNRLocator: normalizedPnr,
     },
   };
 

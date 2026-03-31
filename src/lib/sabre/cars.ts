@@ -2,7 +2,7 @@
 // Vehicle availability search and booking.
 
 import { sabreRequest } from "./client";
-import type { CarSearchParams } from "./types";
+import type { CarSearchParams, CarBookingParams } from "./types";
 
 /**
  * Search for car rental availability.
@@ -51,21 +51,7 @@ export async function searchCars(params: CarSearchParams) {
  * Book a rental car.
  * POST /v1/book/cars
  */
-export async function bookCar(params: {
-  pickUpLocation: string;
-  returnLocation?: string;
-  pickUpDateTime: string;
-  returnDateTime: string;
-  vehicleType: string;
-  vendorCode: string;
-  rateCode?: string;
-  passenger: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-  };
-}) {
+export async function bookCar(params: CarBookingParams) {
   const body = {
     OTA_VehResRQ: {
       VehResRQCore: {

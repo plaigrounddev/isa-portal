@@ -669,7 +669,12 @@ export default function Portal() {
         const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     })();
 
-    const handleSignOut = () => { router.push('/'); };
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSignOut = () => {
+        if (typeof window !== 'undefined') localStorage.removeItem('isa_user');
+        router.push('/');
+    };
 
     // Clear return date when switching to one-way or when depart moves past it
     useEffect(() => { if (flightTripType === 'OW') setFlightReturn(''); }, [flightTripType]);
@@ -840,7 +845,7 @@ export default function Portal() {
 
                         <div className={styles.welcomeSection}>
                             <h1 className={styles.pageTitle}>Dashboard</h1>
-                            <p className={styles.pageSubtitle}>Welcome back, {user?.firstName || 'John'}. You have 2 upcoming travel events.</p>
+                            <p className={styles.pageSubtitle}>Welcome back, {user?.firstName || 'there'}. {travelers.length > 0 ? `You have ${travelers.length} traveler${travelers.length !== 1 ? 's' : ''} on your profile.` : 'Get started by adding travelers and booking your first trip.'}</p>
                         </div>
 
                         <div className={`${styles.card} ${styles.cardFull}`} style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
@@ -867,31 +872,16 @@ export default function Portal() {
                         <div className={`${styles.card} ${styles.cardFull}`}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>Upcoming Itineraries</h2>
-                                <a href="#" className={styles.viewAllLink} onClick={(e) => { e.preventDefault(); setActiveTab('itineraries'); }}>View All</a>
                             </div>
-                            <div className={styles.itineraryList}>
-                                <div className={styles.itineraryCard}>
-                                    <div className={styles.eventDetails}>
-                                        <div className={styles.eventTitle}>International Pathways Tournament</div>
-                                        <div className={styles.eventLoc}>Frankfurt, Germany • June 12 – 18, 2026</div>
-                                    </div>
-                                    <div className={styles.serviceStatusRow}>
-                                        <span className={`${styles.statusPill} ${styles.statusSuccess}`}><Plane size={14} /> Booked</span>
-                                        <span className={`${styles.statusPill} ${styles.statusPending}`}><Hotel size={14} /> Pending</span>
-                                        <span className={`${styles.statusPill} ${styles.statusSuccess}`}><Car size={14} /> Booked</span>
-                                    </div>
-                                    <button className="circle-arrow-btn" style={{ width: '44px', height: '44px', flexShrink: 0 }}><ArrowRight size={18} strokeWidth={2} /></button>
-                                </div>
-                                <div className={styles.itineraryCard}>
-                                    <div className={styles.eventDetails}>
-                                        <div className={styles.eventTitle}>European Youth Showcase</div>
-                                        <div className={styles.eventLoc}>Barcelona, Spain • July 8 – 14, 2026</div>
-                                    </div>
-                                    <div className={styles.serviceStatusRow}>
-                                        <span className={`${styles.statusPill} ${styles.statusPending}`}><Plane size={14} /> Pending</span>
-                                        <span className={`${styles.statusPill} ${styles.statusPending}`}><Hotel size={14} /> Pending</span>
-                                    </div>
-                                    <button className="circle-arrow-btn" style={{ width: '44px', height: '44px', flexShrink: 0 }}><ArrowRight size={18} strokeWidth={2} /></button>
+                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                                <Plane size={40} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                <h3 style={{ fontSize: '1.1rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No upcoming trips yet</h3>
+                                <p style={{ fontSize: '0.9rem', marginBottom: '24px', maxWidth: '360px', margin: '0 auto 24px', lineHeight: 1.5 }}>
+                                    Book a flight or full trip to see your itineraries here.
+                                </p>
+                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                    <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => setActiveTab('flights')}>Search Flights</button>
+                                    <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>Full Booking</button>
                                 </div>
                             </div>
                         </div>
@@ -1299,11 +1289,14 @@ export default function Portal() {
                             <h1 className={styles.pageTitle}>Itineraries</h1>
                             <p className={styles.pageSubtitle}>Review and manage your active and past trips.</p>
                         </div>
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ textAlign: 'center', color: '#888' }}>
-                                <Plane size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px' }}>Your trips are currently syncing</h3>
-                                <p>Check back shortly for your detailed itinerary view.</p>
+                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ textAlign: 'center', color: '#888', maxWidth: '400px' }}>
+                                <Plane size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No Itineraries Yet</h3>
+                                <p style={{ lineHeight: 1.5, marginBottom: '24px' }}>Once you book a trip, your full itinerary — flights, hotels, and ground transport — will appear here.</p>
+                                <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.85rem' }} onClick={() => router.push('/booking')}>
+                                    Book Your First Trip
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1403,13 +1396,22 @@ export default function Portal() {
                                     <UserPlus size={18} /> Add Your First Traveler
                                 </button>
                             </div>
-                        ) : travelers.length > 0 && (
+                        ) : travelers.length > 0 && (() => {
+                            const q = searchQuery.toLowerCase().trim();
+                            const filtered = q ? travelers.filter(t => `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) || getRoleLabel(t.role).toLowerCase().includes(q) || t.email.toLowerCase().includes(q)) : travelers;
+                            return (
                             <div className={`${styles.card} ${styles.cardFull}`}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{travelers.length} Traveler{travelers.length !== 1 ? 's' : ''}</h3>
+                                    <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{q ? `${filtered.length} of ${travelers.length}` : travelers.length} Traveler{(q ? filtered.length : travelers.length) !== 1 ? 's' : ''}{q ? ` matching "${searchQuery}"` : ''}</h3>
                                 </div>
+                                {filtered.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                                        <Search size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                                        <p style={{ fontSize: '0.9rem' }}>No travelers match &ldquo;{searchQuery}&rdquo;</p>
+                                    </div>
+                                ) : (
                                 <div className={styles.tList}>
-                                    {travelers.map(t => (
+                                    {filtered.map(t => (
                                         <div key={t.id} className={styles.tCard}>
                                             <div className={styles.tCardLeft}>
                                                 <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
@@ -1430,8 +1432,10 @@ export default function Portal() {
                                         </div>
                                     ))}
                                 </div>
+                                )}
                             </div>
-                        )}
+                            );
+                        })()}
                     </div>
                 );
             case 'invoices':
@@ -1441,11 +1445,11 @@ export default function Portal() {
                             <h1 className={styles.pageTitle}>Invoices</h1>
                             <p className={styles.pageSubtitle}>View past transactions, download receipts, and manage billing securely.</p>
                         </div>
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ textAlign: 'center', color: '#888' }}>
-                                <FileText size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px' }}>No Pending Invoices</h3>
-                                <p>Your historical billing details will appear here.</p>
+                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ textAlign: 'center', color: '#888', maxWidth: '400px' }}>
+                                <FileText size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }}>No Invoices Yet</h3>
+                                <p style={{ lineHeight: 1.5 }}>Invoices and receipts will appear here automatically after you complete a booking.</p>
                             </div>
                         </div>
                     </div>
@@ -1490,7 +1494,16 @@ export default function Portal() {
                 <header className={styles.topbar}>
                     <div className={styles.searchContainer}>
                         <div className={styles.searchIcon}><Search size={20} strokeWidth={1.5} /></div>
-                        <input type="text" className={styles.searchInput} placeholder="Search itineraries, travelers..." />
+                        <input
+                            type="text"
+                            className={styles.searchInput}
+                            placeholder="Search travelers..."
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                if (e.target.value.trim()) setActiveTab('travelers');
+                            }}
+                        />
                     </div>
                     <button className={styles.bookBtn} onClick={() => router.push('/booking')}>
                         Book New Trip <ArrowRight size={18} strokeWidth={2} />
@@ -1537,9 +1550,7 @@ export default function Portal() {
                         </div>
                         <div className={styles.chatWindow}>
                             <div className={styles.chatMessages}>
-                                <div className={`${styles.chatMessage} ${styles.chatMessageBot}`}>Hello John, I&apos;m your AI travel assistant. How can I help you today?</div>
-                                <div className={`${styles.chatMessage} ${styles.chatMessageUser}`}>Hi, I need to check the status of my itinerary for Frankfurt.</div>
-                                <div className={`${styles.chatMessage} ${styles.chatMessageBot}`}>Your flights to Frankfurt are confirmed. The hotel booking is currently pending. Should I expedite the hotel confirmation for you or look for alternatives?</div>
+                                <div className={`${styles.chatMessage} ${styles.chatMessageBot}`}>Hello{user ? ` ${user.firstName}` : ''}, I&apos;m your ISA travel assistant. How can I help you today?</div>
                             </div>
                             <div className={styles.chatInputArea}>
                                 <input type="text" className={styles.chatInput} placeholder="Type your message..." />

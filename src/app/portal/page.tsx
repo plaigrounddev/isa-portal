@@ -520,10 +520,121 @@ const AirportSearchInput = ({ value, onChange, placeholder }: { value: string; o
 // MAIN PORTAL COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+interface Traveler {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: 'athlete' | 'parent' | 'coach' | 'team-manager' | 'sibling' | 'other';
+    dateOfBirth: string;
+    gender: 'M' | 'F' | '';
+    email: string;
+    phone: string;
+    nationality: string;
+}
+
+interface UserAccount {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    isNew?: boolean;
+}
+
+const TRAVELER_ROLES = [
+    { value: 'athlete', label: 'Athlete' },
+    { value: 'parent', label: 'Parent / Guardian' },
+    { value: 'coach', label: 'Coach' },
+    { value: 'team-manager', label: 'Team Manager' },
+    { value: 'sibling', label: 'Sibling' },
+    { value: 'other', label: 'Other' },
+];
+
+const ROLE_COLORS: Record<string, string> = {
+    athlete: '#E63946', parent: '#3498db', coach: '#27ae60',
+    'team-manager': '#8e44ad', sibling: '#f39c12', other: '#95a5a6',
+};
+
+function getInitials(first: string, last: string) {
+    return `${(first || '?')[0]}${(last || '?')[0]}`.toUpperCase();
+}
+
+function getRoleLabel(role: string) {
+    return TRAVELER_ROLES.find(r => r.value === role)?.label || role;
+}
+
 export default function Portal() {
     const router = useRouter();
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+
+    // User account
+    const [user, setUser] = useState<UserAccount | null>(null);
+    const [showWelcome, setShowWelcome] = useState(false);
+
+    // Travelers
+    const [travelers, setTravelers] = useState<Traveler[]>([]);
+    const [isAddingTraveler, setIsAddingTraveler] = useState(false);
+    const [editingTravelerId, setEditingTravelerId] = useState<string | null>(null);
+    const [travelerForm, setTravelerForm] = useState<Omit<Traveler, 'id'>>({
+        firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '',
+        gender: '', email: '', phone: '', nationality: '',
+    });
+
+    // Load user + travelers from localStorage
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = localStorage.getItem('isa_user');
+            if (raw) {
+                const parsed = JSON.parse(raw) as UserAccount;
+                setUser(parsed);
+                if (parsed.isNew) {
+                    setShowWelcome(true);
+                    localStorage.setItem('isa_user', JSON.stringify({ ...parsed, isNew: false }));
+                }
+            }
+            const rawT = localStorage.getItem('isa_travelers');
+            if (rawT) setTravelers(JSON.parse(rawT));
+        } catch { /* ignore */ }
+    }, []);
+
+    const saveTravelers = (list: Traveler[]) => {
+        setTravelers(list);
+        if (typeof window !== 'undefined') localStorage.setItem('isa_travelers', JSON.stringify(list));
+    };
+
+    const handleAddTraveler = () => {
+        if (!travelerForm.firstName.trim() || !travelerForm.lastName.trim()) return;
+        const newTraveler: Traveler = { ...travelerForm, id: `t-${Date.now()}` } as Traveler;
+        saveTravelers([...travelers, newTraveler]);
+        resetTravelerForm();
+    };
+
+    const handleUpdateTraveler = () => {
+        if (!editingTravelerId || !travelerForm.firstName.trim() || !travelerForm.lastName.trim()) return;
+        saveTravelers(travelers.map(t => t.id === editingTravelerId ? { ...travelerForm, id: editingTravelerId } as Traveler : t));
+        resetTravelerForm();
+    };
+
+    const handleDeleteTraveler = (id: string) => {
+        saveTravelers(travelers.filter(t => t.id !== id));
+    };
+
+    const startEdit = (t: Traveler) => {
+        setEditingTravelerId(t.id);
+        setTravelerForm({
+            firstName: t.firstName, lastName: t.lastName, role: t.role,
+            dateOfBirth: t.dateOfBirth, gender: t.gender, email: t.email,
+            phone: t.phone, nationality: t.nationality,
+        });
+        setIsAddingTraveler(true);
+    };
+
+    const resetTravelerForm = () => {
+        setIsAddingTraveler(false);
+        setEditingTravelerId(null);
+        setTravelerForm({ firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '', gender: '', email: '', phone: '', nationality: '' });
+    };
 
     // ── Flight search state ──────────────────────────────────────────────────
     const [flightOrigin, setFlightOrigin] = useState('');
@@ -664,9 +775,31 @@ export default function Portal() {
             case 'overview':
                 return (
                     <>
+                        {showWelcome && user && (
+                            <div className={styles.welcomeBanner}>
+                                <div className={styles.welcomeBannerContent}>
+                                    <h2 className={styles.welcomeBannerTitle}>Welcome to ISA Travel, {user.firstName}!</h2>
+                                    <p className={styles.welcomeBannerText}>
+                                        Your portal is set up and ready to go. Start by adding travelers to your profile, then book flights and hotels for upcoming events.
+                                    </p>
+                                    <div className={styles.welcomeBannerActions}>
+                                        <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.9rem' }} onClick={() => { setActiveTab('travelers'); setIsAddingTraveler(true); }}>
+                                            Add Your First Traveler
+                                        </button>
+                                        <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.9rem' }} onClick={() => setShowWelcome(false)}>
+                                            Explore Portal
+                                        </button>
+                                    </div>
+                                </div>
+                                <button className={styles.welcomeBannerClose} onClick={() => setShowWelcome(false)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        )}
+
                         <div className={styles.welcomeSection}>
                             <h1 className={styles.pageTitle}>Dashboard</h1>
-                            <p className={styles.pageSubtitle}>Welcome back, John. You have 2 upcoming travel events.</p>
+                            <p className={styles.pageSubtitle}>Welcome back, {user?.firstName || 'John'}. You have 2 upcoming travel events.</p>
                         </div>
 
                         <div className={`${styles.card} ${styles.cardFull}`} style={{ padding: 0, background: 'transparent', border: 'none', boxShadow: 'none' }}>
@@ -725,20 +858,24 @@ export default function Portal() {
                         <div className={styles.card}>
                             <h2 className={styles.cardTitle}>Traveler Profiles</h2>
                             <div className={styles.travelerList}>
-                                <div className={styles.travelerRow}>
-                                    <div className={styles.travelerAvatar}>JS</div>
-                                    <div className={styles.travelerInfo}>
-                                        <div className={styles.travelerName}>John Smith</div>
-                                        <div className={styles.travelerRole}>Athlete</div>
+                                {travelers.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '24px 0', color: '#999' }}>
+                                        <Users size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+                                        <p style={{ fontSize: '0.9rem', marginBottom: '16px' }}>No travelers added yet.</p>
                                     </div>
-                                </div>
-                                <div className={styles.travelerRow}>
-                                    <div className={styles.travelerAvatar} style={{ background: 'rgba(52, 152, 219, 0.1)', color: '#3498db' }}>MS</div>
-                                    <div className={styles.travelerInfo}>
-                                        <div className={styles.travelerName}>Maria Smith</div>
-                                        <div className={styles.travelerRole}>Parent</div>
-                                    </div>
-                                </div>
+                                ) : (
+                                    travelers.slice(0, 3).map(t => (
+                                        <div key={t.id} className={styles.travelerRow}>
+                                            <div className={styles.travelerAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
+                                                {getInitials(t.firstName, t.lastName)}
+                                            </div>
+                                            <div className={styles.travelerInfo}>
+                                                <div className={styles.travelerName}>{t.firstName} {t.lastName}</div>
+                                                <div className={styles.travelerRole}>{getRoleLabel(t.role)}</div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                                 <button className={styles.addTravelerBtn} onClick={() => setActiveTab('travelers')}><UserPlus size={18} /> Manage Travelers</button>
                             </div>
                         </div>
@@ -1118,16 +1255,126 @@ export default function Portal() {
                 return (
                     <div className={styles.tabContentBlock}>
                         <div className={styles.welcomeSection}>
-                            <h1 className={styles.pageTitle}>Travelers</h1>
-                            <p className={styles.pageSubtitle}>Manage profiles, preferences, and details for linked travelers.</p>
-                        </div>
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ textAlign: 'center', color: '#888' }}>
-                                <Users size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px' }}>Traveler Management</h3>
-                                <p>This section is under active construction.</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                                <div>
+                                    <h1 className={styles.pageTitle}>Travelers</h1>
+                                    <p className={styles.pageSubtitle}>Manage profiles for athletes, parents, coaches, and team members.</p>
+                                </div>
+                                {!isAddingTraveler && (
+                                    <button className={styles.addTravelerHeaderBtn} onClick={() => { resetTravelerForm(); setIsAddingTraveler(true); }}>
+                                        <UserPlus size={18} /> Add Traveler
+                                    </button>
+                                )}
                             </div>
                         </div>
+
+                        {/* Add/Edit Form */}
+                        {isAddingTraveler && (
+                            <div className={`${styles.card} ${styles.cardFull}`}>
+                                <h3 className={styles.cardTitle}>{editingTravelerId ? 'Edit Traveler' : 'Add New Traveler'}</h3>
+
+                                <div className={styles.tFormGrid}>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>First Name *</label>
+                                        <input type="text" className={styles.tFormInput} placeholder="First name" value={travelerForm.firstName} onChange={(e) => setTravelerForm({ ...travelerForm, firstName: e.target.value })} />
+                                    </div>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>Last Name *</label>
+                                        <input type="text" className={styles.tFormInput} placeholder="Last name" value={travelerForm.lastName} onChange={(e) => setTravelerForm({ ...travelerForm, lastName: e.target.value })} />
+                                    </div>
+                                </div>
+
+                                <div className={styles.tFormGroup}>
+                                    <label className={styles.tFormLabel}>Role *</label>
+                                    <div className={styles.tRoleRow}>
+                                        {TRAVELER_ROLES.map(r => (
+                                            <button key={r.value} className={`${styles.tRoleChip} ${travelerForm.role === r.value ? styles.tRoleChipActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, role: r.value as Traveler['role'] })}>
+                                                {r.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={styles.tFormGrid}>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>Date of Birth</label>
+                                        <input type="date" className={styles.tFormInput} value={travelerForm.dateOfBirth} onChange={(e) => setTravelerForm({ ...travelerForm, dateOfBirth: e.target.value })} />
+                                    </div>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>Gender</label>
+                                        <div className={styles.tGenderRow}>
+                                            <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'M' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'M' })}>Male</button>
+                                            <button className={`${styles.tGenderBtn} ${travelerForm.gender === 'F' ? styles.tGenderBtnActive : ''}`} onClick={() => setTravelerForm({ ...travelerForm, gender: 'F' })}>Female</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={styles.tFormGrid}>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>Email</label>
+                                        <input type="email" className={styles.tFormInput} placeholder="email@example.com" value={travelerForm.email} onChange={(e) => setTravelerForm({ ...travelerForm, email: e.target.value })} />
+                                    </div>
+                                    <div className={styles.tFormGroup}>
+                                        <label className={styles.tFormLabel}>Phone</label>
+                                        <input type="tel" className={styles.tFormInput} placeholder="+1 (234) 567-8900" value={travelerForm.phone} onChange={(e) => setTravelerForm({ ...travelerForm, phone: e.target.value })} />
+                                    </div>
+                                </div>
+
+                                <div className={styles.tFormGroup}>
+                                    <label className={styles.tFormLabel}>Nationality</label>
+                                    <input type="text" className={styles.tFormInput} placeholder="e.g. US, CA, GB" value={travelerForm.nationality} onChange={(e) => setTravelerForm({ ...travelerForm, nationality: e.target.value })} style={{ maxWidth: '200px' }} />
+                                </div>
+
+                                <div className={styles.tFormActions}>
+                                    <button className={styles.tCancelBtn} onClick={resetTravelerForm}>Cancel</button>
+                                    <button className="geometric-btn" style={{ padding: '14px 32px', fontSize: '0.9rem' }} onClick={editingTravelerId ? handleUpdateTraveler : handleAddTraveler} disabled={!travelerForm.firstName.trim() || !travelerForm.lastName.trim()}>
+                                        {editingTravelerId ? 'Save Changes' : 'Add Traveler'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Traveler List */}
+                        {travelers.length === 0 && !isAddingTraveler ? (
+                            <div className={`${styles.card} ${styles.cardFull}`} style={{ textAlign: 'center', padding: '64px 32px' }}>
+                                <Users size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                                <h3 style={{ fontSize: '1.25rem', color: 'var(--isa-black)', marginBottom: '8px' }}>No Travelers Yet</h3>
+                                <p style={{ color: '#888', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>
+                                    Add athletes, parents, coaches, and team members to quickly include them in your bookings.
+                                </p>
+                                <button className="geometric-btn" style={{ padding: '16px 32px', fontSize: '0.9rem' }} onClick={() => { resetTravelerForm(); setIsAddingTraveler(true); }}>
+                                    <UserPlus size={18} /> Add Your First Traveler
+                                </button>
+                            </div>
+                        ) : travelers.length > 0 && (
+                            <div className={`${styles.card} ${styles.cardFull}`}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{travelers.length} Traveler{travelers.length !== 1 ? 's' : ''}</h3>
+                                </div>
+                                <div className={styles.tList}>
+                                    {travelers.map(t => (
+                                        <div key={t.id} className={styles.tCard}>
+                                            <div className={styles.tCardLeft}>
+                                                <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
+                                                    {getInitials(t.firstName, t.lastName)}
+                                                </div>
+                                                <div className={styles.tCardInfo}>
+                                                    <div className={styles.tCardName}>{t.firstName} {t.lastName}</div>
+                                                    <div className={styles.tCardMeta}>
+                                                        <span className={styles.tCardRole} style={{ color: ROLE_COLORS[t.role] || '#999' }}>{getRoleLabel(t.role)}</span>
+                                                        {t.email && <span className={styles.tCardEmail}>{t.email}</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className={styles.tCardActions}>
+                                                <button className={styles.tEditBtn} onClick={() => startEdit(t)}>Edit</button>
+                                                <button className={styles.tDeleteBtn} onClick={() => handleDeleteTraveler(t.id)}>Remove</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             case 'invoices':
@@ -1170,10 +1417,10 @@ export default function Portal() {
 
                 <div className={styles.sidebarBottom}>
                     <div className={styles.userCard}>
-                        <div className={styles.avatar}>JS</div>
+                        <div className={styles.avatar}>{user ? getInitials(user.firstName, user.lastName) : 'JS'}</div>
                         <div className={styles.userInfo}>
-                            <div className={styles.userName}>John Smith</div>
-                            <div className={styles.userRole}>Member</div>
+                            <div className={styles.userName}>{user ? `${user.firstName} ${user.lastName}` : 'John Smith'}</div>
+                            <div className={styles.userRole}>{user?.role ? getRoleLabel(user.role) : 'Member'}</div>
                         </div>
                     </div>
                     <button onClick={handleSignOut} className={styles.signOutBtn}>

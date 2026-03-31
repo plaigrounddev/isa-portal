@@ -24,6 +24,7 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
+import { HotelDetailModal } from '@/components/hotel/HotelDetailModal';
 import styles from './portal.module.css';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -680,6 +681,9 @@ export default function Portal() {
     const [isSearchingHotels, setIsSearchingHotels] = useState(false);
     const [hotelError, setHotelError] = useState('');
     const [hasSearchedHotels, setHasSearchedHotels] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [rawHotelData, setRawHotelData] = useState<any>(null);
+    const [detailHotel, setDetailHotel] = useState<ParsedHotel | null>(null);
 
     const todayStr = (() => {
         const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -775,6 +779,7 @@ export default function Portal() {
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Hotel search failed');
+            setRawHotelData(data);
             const parsed = parseLiteApiResponse(data);
             setHotelResults(parsed);
             if (parsed.length === 0) setHotelError('No hotels found. Try a different city or dates.');
@@ -827,6 +832,42 @@ export default function Portal() {
     const calcNights = (checkin: string, checkout: string) => {
         const a = new Date(checkin), b = new Date(checkout);
         return Math.max(1, Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)));
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extractRoomRates = (hotelId: string): any[] => {
+        if (!rawHotelData) return [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const hotelData = (rawHotelData.data as any[])?.find((h: any) => h.hotelId === hotelId);
+        if (!hotelData) return [];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rates: any[] = [];
+        const roomTypes = hotelData.roomTypes ?? [];
+        for (const rt of roomTypes) {
+            const offerId = rt.offerId ?? '';
+            for (const rate of (rt.rates ?? [])) {
+                const total = rate.retailRate?.total;
+                const priceObj = Array.isArray(total) ? total[0] : total;
+                const price = priceObj?.amount ?? 0;
+                const currency = priceObj?.currency ?? 'USD';
+                const cancelPolicies = rate.cancellationPolicies;
+                rates.push({
+                    offerId,
+                    rateId: rate.rateId ?? '',
+                    roomName: rate.name ?? rt.name ?? 'Standard Room',
+                    maxOccupancy: rate.maxOccupancy ?? 0,
+                    boardType: rate.boardType ?? 'RO',
+                    boardName: rate.boardName ?? 'Room Only',
+                    price,
+                    currency,
+                    refundable: cancelPolicies?.refundableTag === 'RFN',
+                    cancelDeadline: cancelPolicies?.cancelPolicyInfos?.[0]?.cancelTime ?? '',
+                    remarks: rate.remarks ?? '',
+                });
+            }
+        }
+        return rates;
     };
 
     const handleDestinationClick = (city: string, countryCode: string) => {
@@ -1248,7 +1289,7 @@ export default function Portal() {
                                         const nights = (hotelCheckin && hotelCheckout) ? calcNights(hotelCheckin, hotelCheckout) : 1;
                                         const perNight = hotel.price > 0 ? Math.round(hotel.price / nights) : 0;
                                         return (
-                                            <div key={hotel.hotelId} className={styles.htCard} onClick={() => router.push('/booking')}>
+                                            <div key={hotel.hotelId} className={styles.htCard} onClick={() => setDetailHotel(hotel)}>
                                                 {hotel.image ? (
                                                     <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
                                                 ) : (
@@ -1604,6 +1645,25 @@ export default function Portal() {
                     {renderContent()}
                 </div>
             </div>
+
+            {detailHotel && (
+                <HotelDetailModal
+                    hotelId={detailHotel.hotelId}
+                    hotelName={detailHotel.name}
+                    hotelImage={detailHotel.image}
+                    hotelStars={detailHotel.stars}
+                    hotelAddress={detailHotel.address}
+                    checkin={hotelCheckin}
+                    checkout={hotelCheckout}
+                    rates={extractRoomRates(detailHotel.hotelId)}
+                    onClose={() => setDetailHotel(null)}
+                    onSelectRate={(rate) => {
+                        try { sessionStorage.setItem('selected_hotel_rate', JSON.stringify({ ...rate, hotelName: detailHotel.name, hotelId: detailHotel.hotelId })); } catch { /* */ }
+                        setDetailHotel(null);
+                        router.push('/booking');
+                    }}
+                />
+            )}
 
             {isContactOpen && (
                 <div className={styles.contactOverlay}>

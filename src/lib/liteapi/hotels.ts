@@ -1,9 +1,34 @@
 // ─── LiteAPI Hotel Functions ────────────────────────────────────────────────
-// 1. searchHotelRates  — POST /hotels/rates  (api base)
-// 2. prebookRate        — POST /rates/prebook (book base)
-// 3. bookRate           — POST /rates/book    (book base)
+// Search rates, prebook, book, hotel details, places, reviews
 
 import { liteApiRequest } from "./client";
+
+// ════════════════════════════════════════════════════════════════════════════
+// HOTEL DETAIL
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getHotelDetail(hotelId: string) {
+  return liteApiRequest(`/data/hotel?hotelId=${encodeURIComponent(hotelId)}`);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// HOTEL REVIEWS
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getHotelReviews(hotelId: string, limit = 10) {
+  return liteApiRequest(`/data/reviews?hotelId=${encodeURIComponent(hotelId)}&limit=${limit}`);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PLACES SEARCH
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function searchPlaces(textQuery: string, type?: string) {
+  const params = new URLSearchParams({ textQuery });
+  if (type) params.set('type', type);
+  params.set('language', 'en');
+  return liteApiRequest(`/data/places?${params.toString()}`);
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // SEARCH HOTEL RATES

@@ -788,7 +788,7 @@ export default function Portal() {
         } finally {
             setIsSearchingHotels(false);
         }
-    }, [hotelCity, hotelCountry, hotelCheckin, hotelCheckout, hotelAdults]);
+    }, [hotelCity, hotelCountry, hotelCheckin, hotelCheckout, hotelAdults, hotelRooms]);
 
     // Filtered flights
     const filteredFlights = flightResults.filter(f => {
@@ -1260,19 +1260,20 @@ export default function Portal() {
                             </div>
                         )}
 
-                        {/* Empty / Error */}
-                        {hasSearchedHotels && !isSearchingHotels && hotelResults.length === 0 && (
+                        {/* Error (API failure) */}
+                        {hotelError && !isSearchingHotels && (
+                            <div className={styles.htEmptyState}>
+                                <MapPin size={40} strokeWidth={1} />
+                                <p style={{ color: 'var(--isa-red)' }}>{hotelError}</p>
+                            </div>
+                        )}
+
+                        {/* Empty (successful search, zero results) */}
+                        {hasSearchedHotels && !isSearchingHotels && !hotelError && hotelResults.length === 0 && (
                             <div className={styles.htEmptyState}>
                                 <MapPin size={40} strokeWidth={1} />
                                 <h3>No hotels found{hotelCity ? ` in ${hotelCity}` : ''}</h3>
                                 <p>Try a different destination, adjust your dates, or expand your search.</p>
-                            </div>
-                        )}
-
-                        {/* Error (API failure only) */}
-                        {hotelError && hotelResults.length === 0 && !isSearchingHotels && !hasSearchedHotels && (
-                            <div className={styles.htEmptyState}>
-                                <p style={{ color: 'var(--isa-red)' }}>{hotelError}</p>
                             </div>
                         )}
 
@@ -1640,7 +1641,8 @@ export default function Portal() {
                 <button className={`${styles.mobileNavItem} ${activeTab === 'flights' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('flights')}><Plane size={20} /><span>Flights</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'hotels' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('hotels')}><Hotel size={20} /><span>Hotels</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'travelers' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('travelers')}><Users size={20} /><span>Travelers</span></button>
-                <button className={`${styles.mobileNavItem} ${activeTab === 'itineraries' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('itineraries')}><FileText size={20} /><span>Trips</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'invoices' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('invoices')}><FileText size={20} /><span>Invoices</span></button>
+                <button className={styles.mobileNavItem} onClick={handleSignOut}><LogOut size={20} /><span>Sign Out</span></button>
             </nav>
 
             {detailHotel && (

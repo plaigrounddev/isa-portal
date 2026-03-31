@@ -1049,6 +1049,7 @@
 
     .mainContent {
         padding: 16px;
+        padding-bottom: 100px;
         width: 100%;
         max-width: 100vw;
         overflow-x: hidden;

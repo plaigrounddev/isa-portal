@@ -57,10 +57,14 @@ export async function flightShop(params: FlightShopParams) {
     });
   }
 
-  // Build travelers array
-  const travelers = params.passengers?.map((p) => ({
-    passengerTypeCode: p.passengerTypeCode,
-  })) || [{ passengerTypeCode: "ADT" }];
+  const travelers =
+    params.passengers?.flatMap(({ passengerTypeCode, count = 1 }) =>
+      Array.from({ length: count }, () => ({ passengerTypeCode }))
+    ) ?? [];
+
+  if (travelers.length === 0) {
+    travelers.push({ passengerTypeCode: "ADT" });
+  }
 
   // Build request body per spec
   const body: Record<string, unknown> = {

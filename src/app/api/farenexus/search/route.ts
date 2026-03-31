@@ -35,16 +35,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await searchFlights({
+    const baseParams = {
       origin,
       destination,
       departureDate,
-      returnDate: returnDate as string | undefined,
       passengers: passengers as unknown as { type: "ADT" | "CNN" | "INF"; quantity: number }[] | undefined,
-      tripType: tripType as "OW" | "RT" | "MC" | undefined,
       travelClass: travelClass as "ECO" | "PEY" | "BUS" | "FIR" | undefined,
       pos: pos as string | undefined,
-    });
+    };
+
+    const searchParams =
+      tripType === "RT" && returnDate
+        ? { ...baseParams, tripType: "RT" as const, returnDate: returnDate as string }
+        : tripType === "MC"
+          ? { ...baseParams, tripType: "MC" as const, returnDate: returnDate as string | undefined }
+          : { ...baseParams, tripType: "OW" as const };
+
+    const result = await searchFlights(searchParams);
 
     return NextResponse.json(result);
   } catch (err: unknown) {

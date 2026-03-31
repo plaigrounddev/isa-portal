@@ -43,16 +43,19 @@ export interface FareNexusSearchRequest {
 }
 
 /** Simplified search params the front-end sends to our API route */
-export interface FareNexusSearchParams {
+type FareNexusSearchBaseParams = {
   origin: string;
   destination: string;
   departureDate: string;
-  returnDate?: string;
   passengers?: FareNexusPassenger[];
-  tripType?: "OW" | "RT" | "MC";
   travelClass?: "ECO" | "PEY" | "BUS" | "FIR";
   pos?: string;
-}
+};
+
+export type FareNexusSearchParams =
+  | (FareNexusSearchBaseParams & { tripType?: "OW"; returnDate?: never })
+  | (FareNexusSearchBaseParams & { tripType: "RT"; returnDate: string })
+  | (FareNexusSearchBaseParams & { tripType: "MC"; returnDate?: string });
 
 // The raw search response is large and varies — we type the parts we need
 export interface FareNexusSearchResponse {

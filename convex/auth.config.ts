@@ -1,7 +1,6 @@
-const domain = process.env.CONVEX_SITE_URL ?? process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
-if (!domain) {
-    throw new Error("Missing CONVEX_SITE_URL or NEXT_PUBLIC_CONVEX_SITE_URL environment variable for auth config.");
-}
+const domain = process.env.CONVEX_SITE_URL
+    ?? process.env.NEXT_PUBLIC_CONVEX_SITE_URL
+    ?? "https://blessed-chickadee-405.convex.site";
 
 export default {
     providers: [

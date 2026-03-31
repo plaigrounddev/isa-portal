@@ -900,6 +900,8 @@ export default function Portal() {
                 currency: target.currency,
                 origin: target.outbound.departAirport,
                 destination: target.outbound.arriveAirport,
+                ...(target.outbound.departDate ? { departDate: target.outbound.departDate } : {}),
+                ...(target.inbound?.departDate ? { returnDate: target.inbound.departDate } : {}),
             });
             router.push(`/booking?${params.toString()}`);
         } catch {

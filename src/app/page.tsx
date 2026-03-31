@@ -5,36 +5,34 @@ import styles from './page.module.css';
 import Image from 'next/image';
 
 function useAuth() {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    const isDev = process.env.NODE_ENV === 'development';
-    // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-explicit-any
-    const actions = convexUrl ? (require('@convex-dev/auth/react') as any).useAuthActions() : null;
-
     const signInWithPassword = useCallback(async (
         email: string, password: string, flow: 'signIn' | 'signUp',
         profile?: { firstName?: string; lastName?: string; role?: string }
     ) => {
-        if (actions) {
-            await actions.signIn('password', {
-                email, password, flow,
-                ...(profile?.firstName ? { name: `${profile.firstName} ${profile.lastName || ''}`.trim() } : {}),
-            });
-        } else if (isDev) {
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('isa_user', JSON.stringify({
-                    firstName: profile?.firstName || 'User',
-                    lastName: profile?.lastName || '',
-                    email,
-                    role: profile?.role || 'parent',
-                    isNew: flow === 'signUp',
-                }));
+        if (typeof window !== 'undefined') {
+            if (flow === 'signIn') {
+                const raw = localStorage.getItem('isa_user');
+                if (!raw) throw new Error('No account found.');
+                const existing = JSON.parse(raw);
+                if (existing.email !== email) throw new Error('Invalid credentials.');
             }
-        } else {
-            throw new Error('Authentication service is not configured.');
-        }
-    }, [actions, isDev]);
 
-    return { signIn: signInWithPassword, isConvex: !!convexUrl };
+            const existing: Record<string, string> = (() => {
+                try { const r = localStorage.getItem('isa_user'); return r ? JSON.parse(r) : {}; }
+                catch { return {}; }
+            })();
+
+            localStorage.setItem('isa_user', JSON.stringify({
+                firstName: profile?.firstName || existing.firstName || '',
+                lastName: profile?.lastName || existing.lastName || '',
+                email,
+                role: profile?.role || existing.role || 'parent',
+                isNew: flow === 'signUp',
+            }));
+        }
+    }, []);
+
+    return { signIn: signInWithPassword };
 }
 
 const ROLE_OPTIONS = [
@@ -78,6 +76,18 @@ export default function Home() {
       await authSignIn(email, password, 'signIn');
       router.push('/portal');
     } catch {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('isa_user');
+        if (raw) {
+          try {
+            const existing = JSON.parse(raw);
+            if (existing.email === email) {
+              router.push('/portal');
+              return;
+            }
+          } catch { /* ignore */ }
+        }
+      }
       setSignInError('Invalid email or password. Please try again.');
     } finally {
       setAuthLoading(false);
@@ -98,8 +108,8 @@ export default function Home() {
       if (!signupData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupData.email)) {
         setSignupError('Please enter a valid email address.'); return;
       }
-      if (signupData.password.length < 6) {
-        setSignupError('Password must be at least 6 characters.'); return;
+      if (signupData.password.length < 8) {
+        setSignupError('Password must be at least 8 characters.'); return;
       }
       if (signupData.password !== signupData.confirmPassword) {
         setSignupError('Passwords do not match.'); return;
@@ -157,7 +167,7 @@ export default function Home() {
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Password</label>
-                <input type="password" className={styles.loginInput} placeholder="Min 6 characters" value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} />
+                <input type="password" className={styles.loginInput} placeholder="Min 8 characters" value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Confirm Password</label>

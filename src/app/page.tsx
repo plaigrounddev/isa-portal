@@ -1,8 +1,26 @@
 'use client';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Image from 'next/image';
+
+function useAuth() {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-explicit-any
+    const actions = convexUrl ? (require('@convex-dev/auth/react') as any).useAuthActions() : null;
+
+    const signInWithPassword = useCallback(async (email: string, password: string, flow: 'signIn' | 'signUp', name?: string) => {
+        if (actions) {
+            await actions.signIn('password', { email, password, flow, ...(name ? { name } : {}) });
+        } else {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('isa_user', JSON.stringify({ firstName: name?.split(' ')[0] || 'User', lastName: name?.split(' ')[1] || '', email, role: 'parent', isNew: flow === 'signUp' }));
+            }
+        }
+    }, [actions]);
+
+    return { signIn: signInWithPassword, isConvex: !!convexUrl };
+}
 
 const ROLE_OPTIONS = [
   { value: 'parent', label: 'Parent / Guardian', desc: 'Booking travel for your child or family' },
@@ -26,32 +44,35 @@ export default function Home() {
   });
   const [signupError, setSignupError] = useState('');
 
+  const { signIn: authSignIn } = useAuth();
+  const [authLoading, setAuthLoading] = useState(false);
+  const [signInError, setSignInError] = useState('');
+
   const resetSignup = () => {
     setSignupStep(1);
     setSignupError('');
     setSignupData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: '' });
   };
 
-  // TODO: Replace with real authentication (NextAuth, Clerk, Supabase Auth, etc.)
-  // Current implementation is a simulated sign-in for MVP/demo purposes only.
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined') {
-      const existing = localStorage.getItem('isa_user');
-      if (!existing) {
-        localStorage.setItem('isa_user', JSON.stringify({
-          firstName: 'John', lastName: 'Smith', email, role: 'parent', isNew: false,
-        }));
-      }
+    setSignInError('');
+    setAuthLoading(true);
+    try {
+      await authSignIn(email, password, 'signIn');
+      router.push('/dashboard');
+    } catch {
+      setSignInError('Invalid email or password. Please try again.');
+    } finally {
+      setAuthLoading(false);
     }
-    router.push('/portal');
   };
 
   const handleGuestBooking = () => {
     router.push('/booking');
   };
 
-  const handleSignupNext = () => {
+  const handleSignupNext = async () => {
     setSignupError('');
     if (signupStep === 1) {
       if (!signupData.firstName.trim() || !signupData.lastName.trim()) {
@@ -71,18 +92,20 @@ export default function Home() {
       if (!signupData.role) {
         setSignupError('Please select your role.'); return;
       }
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('isa_user', JSON.stringify({
-          firstName: signupData.firstName.trim(),
-          lastName: signupData.lastName.trim(),
-          email: signupData.email.trim(),
-          role: signupData.role,
-          isNew: true,
-          createdAt: new Date().toISOString(),
-        }));
-        localStorage.setItem('isa_travelers', JSON.stringify([]));
+      setAuthLoading(true);
+      try {
+        await authSignIn(
+          signupData.email.trim(),
+          signupData.password,
+          'signUp',
+          `${signupData.firstName.trim()} ${signupData.lastName.trim()}`
+        );
+        setSignupStep(3);
+      } catch {
+        setSignupError('Account creation failed. This email may already be registered.');
+      } finally {
+        setAuthLoading(false);
       }
-      setSignupStep(3);
     }
   };
 
@@ -165,7 +188,7 @@ export default function Home() {
               <p style={{ color: '#666', marginBottom: '32px', lineHeight: 1.6, fontSize: '1.1rem' }}>
                 Welcome to ISA Travel, <strong>{signupData.firstName}</strong>. Your portal is ready — you can now book flights, manage travelers, and coordinate your team&apos;s travel.
               </p>
-              <button className="geometric-btn" style={{ width: '100%', marginBottom: '16px' }} onClick={() => router.push('/portal')}>
+              <button className="geometric-btn" style={{ width: '100%', marginBottom: '16px' }} onClick={() => router.push('/dashboard')}>
                 Enter My Portal
               </button>
               <button className="geometric-btn geometric-btn-secondary" style={{ width: '100%' }} onClick={() => router.push('/booking')}>
@@ -197,7 +220,10 @@ export default function Home() {
             <label className={styles.inputLabel}>Password</label>
             <input type="password" className={styles.loginInput} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <button type="submit" className="geometric-btn" style={{ width: '100%', marginBottom: '24px' }}>Member Sign In</button>
+          {signInError && <div className={styles.authError}>{signInError}</div>}
+          <button type="submit" className="geometric-btn" style={{ width: '100%', marginBottom: '24px' }} disabled={authLoading}>
+            {authLoading ? 'Signing in...' : 'Member Sign In'}
+          </button>
         </form>
 
         <div className={styles.divider}><span style={{ background: 'white' }}>OR</span></div>

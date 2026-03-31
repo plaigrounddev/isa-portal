@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Anton } from "next/font/google";
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 import "./globals.css";
 
 const fontInter = Inter({
@@ -78,7 +79,7 @@ export default function RootLayout({
       <body
         className={`${fontInter.variable} ${fontAnton.variable} antialiased`}
       >
-        {children}
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );

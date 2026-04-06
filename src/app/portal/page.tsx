@@ -1723,7 +1723,6 @@ export default function Portal() {
                 <button className={`${styles.mobileNavItem} ${activeTab === 'flights' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('flights')}><Plane size={20} /><span>Flights</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'hotels' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('hotels')}><Hotel size={20} /><span>Hotels</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'travelers' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('travelers')}><Users size={20} /><span>Travelers</span></button>
-                <button className={`${styles.mobileNavItem} ${activeTab === 'invoices' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('invoices')}><FileText size={20} /><span>Invoices</span></button>
                 <button className={styles.mobileNavItem} onClick={handleSignOut}><LogOut size={20} /><span>Sign Out</span></button>
             </nav>
 

@@ -1,6 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthActions } from '@convex-dev/auth/react';
+import { useConvexAuth, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import styles from './page.module.css';
 import Image from 'next/image';
 
@@ -14,6 +17,10 @@ const ROLE_OPTIONS = [
 
 export default function Home() {
   const router = useRouter();
+  const { signIn } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+  const storeUser = useMutation(api.users.storeUser);
+
   const [view, setView] = useState<'initial' | 'signin' | 'signup'>('initial');
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -26,32 +33,61 @@ export default function Home() {
   });
   const [signupError, setSignupError] = useState('');
 
+  const [authLoading, setAuthLoading] = useState(false);
+  const [signInError, setSignInError] = useState('');
+
+  // Pending profile data to store after auth completes
+  const pendingProfile = useRef<{ firstName: string; lastName: string; email: string; role: string } | null>(null);
+
+  // When auth completes, store profile and redirect
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const profile = pendingProfile.current;
+    if (profile) {
+      pendingProfile.current = null;
+      storeUser(profile)
+        .then(() => {
+          setSignupStep(3);
+          setAuthLoading(false);
+        })
+        .catch(() => {
+          setSignupError('Profile saved, but there was an issue. Please update your profile in the portal.');
+          setAuthLoading(false);
+          router.push('/portal');
+        });
+    } else {
+      // Already authenticated (returning user) — redirect
+      router.push('/portal');
+    }
+  }, [isAuthenticated, router, storeUser]);
+
   const resetSignup = () => {
     setSignupStep(1);
     setSignupError('');
     setSignupData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: '' });
   };
 
-  // TODO: Replace with real authentication (NextAuth, Clerk, Supabase Auth, etc.)
-  // Current implementation is a simulated sign-in for MVP/demo purposes only.
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined') {
-      const existing = localStorage.getItem('isa_user');
-      if (!existing) {
-        localStorage.setItem('isa_user', JSON.stringify({
-          firstName: 'John', lastName: 'Smith', email, role: 'parent', isNew: false,
-        }));
-      }
+    if (authLoading) return;
+    setSignInError('');
+    setAuthLoading(true);
+    try {
+      await signIn("password", { email, password, flow: "signIn" });
+      router.push('/portal');
+    } catch {
+      setSignInError('Invalid email or password. Please try again.');
+    } finally {
+      setAuthLoading(false);
     }
-    router.push('/portal');
   };
 
   const handleGuestBooking = () => {
     router.push('/booking');
   };
 
-  const handleSignupNext = () => {
+  const handleSignupNext = async () => {
+    if (authLoading) return;
     setSignupError('');
     if (signupStep === 1) {
       if (!signupData.firstName.trim() || !signupData.lastName.trim()) {
@@ -60,8 +96,8 @@ export default function Home() {
       if (!signupData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupData.email)) {
         setSignupError('Please enter a valid email address.'); return;
       }
-      if (signupData.password.length < 6) {
-        setSignupError('Password must be at least 6 characters.'); return;
+      if (signupData.password.length < 8) {
+        setSignupError('Password must be at least 8 characters.'); return;
       }
       if (signupData.password !== signupData.confirmPassword) {
         setSignupError('Passwords do not match.'); return;
@@ -71,18 +107,27 @@ export default function Home() {
       if (!signupData.role) {
         setSignupError('Please select your role.'); return;
       }
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('isa_user', JSON.stringify({
+      setAuthLoading(true);
+      try {
+        // Store profile data for the useEffect to pick up after auth completes
+        pendingProfile.current = {
           firstName: signupData.firstName.trim(),
           lastName: signupData.lastName.trim(),
           email: signupData.email.trim(),
           role: signupData.role,
-          isNew: true,
-          createdAt: new Date().toISOString(),
-        }));
-        localStorage.setItem('isa_travelers', JSON.stringify([]));
+        };
+        await signIn("password", {
+          email: signupData.email.trim(),
+          password: signupData.password,
+          name: `${signupData.firstName.trim()} ${signupData.lastName.trim()}`,
+          flow: "signUp",
+        });
+        // Auth state change will trigger the useEffect above to call storeUser
+      } catch {
+        pendingProfile.current = null;
+        setSignupError('Account creation failed. This email may already be registered.');
+        setAuthLoading(false);
       }
-      setSignupStep(3);
     }
   };
 
@@ -117,7 +162,7 @@ export default function Home() {
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Password</label>
-                <input type="password" className={styles.loginInput} placeholder="Min 6 characters" value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} />
+                <input type="password" className={styles.loginInput} placeholder="Min 8 characters" value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Confirm Password</label>
@@ -197,7 +242,10 @@ export default function Home() {
             <label className={styles.inputLabel}>Password</label>
             <input type="password" className={styles.loginInput} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <button type="submit" className="geometric-btn" style={{ width: '100%', marginBottom: '24px' }}>Member Sign In</button>
+          {signInError && <div className={styles.authError}>{signInError}</div>}
+          <button type="submit" className="geometric-btn" style={{ width: '100%', marginBottom: '24px' }} disabled={authLoading}>
+            {authLoading ? 'Signing in...' : 'Member Sign In'}
+          </button>
         </form>
 
         <div className={styles.divider}><span style={{ background: 'white' }}>OR</span></div>

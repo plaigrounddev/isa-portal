@@ -1,6 +1,9 @@
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthActions } from '@convex-dev/auth/react';
+import { useConvexAuth, useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import {
     LayoutGrid,
     Plane,
@@ -9,6 +12,7 @@ import {
     LogOut,
     Search,
     ArrowRight,
+    ArrowLeft,
     PhoneCall,
     Mail,
     Phone,
@@ -22,6 +26,8 @@ import {
     Star,
     Coffee,
     ShieldCheck,
+    Circle,
+    Check,
 } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import { HotelDetailModal } from '@/components/hotel/HotelDetailModal';
@@ -562,13 +568,94 @@ function getRoleLabel(role: string) {
     return TRAVELER_ROLES.find(r => r.value === role)?.label || role;
 }
 
+const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
+    const [step, setStep] = useState(0);
+    const steps = type === 'flights'
+        ? ['Connecting to airlines...', 'Searching best routes...', 'Finalizing results...']
+        : ['Connecting to partners...', 'Finding best rooms...', 'Finalizing results...'];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setStep(s => {
+                if (s >= steps.length - 1) {
+                    clearInterval(interval);
+                    return s;
+                }
+                return s + 1;
+            });
+        }, 1500);
+        return () => clearInterval(interval);
+    }, [steps.length]);
+
+    return (
+        <div className={styles.loadingSequence}>
+            <div className={styles.loadingSteps}>
+                {steps.map((s, i) => (
+                    <div key={i} className={`${styles.loadingStep} ${i === step ? styles.activeStep : i < step ? styles.completedStep : ''}`}>
+                        <div className={styles.stepIcon}>
+                            {i < step ? <Check size={20} className={styles.completedCheck} /> : i === step ? <Loader2 size={20} className={styles.spinner} /> : <Circle size={20} className={styles.pendingCircle} />}
+                        </div>
+                        <span>{s}</span>
+                    </div>
+                ))}
+            </div>
+
+            {type === 'hotels' ? (
+                <div className={styles.htSkeletonGrid} style={{ opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className={styles.htSkeleton}>
+                            <div className={styles.htSkeletonImg} />
+                            <div className={styles.htSkeletonBody}>
+                                <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className={styles.ftResultsList} style={{ width: '100%', opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className={styles.htSkeleton} style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                            <div className={styles.htSkeletonImg} style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '20%' }} />
+                            </div>
+                            <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                                <div className={styles.htSkeletonLine} style={{ width: '80%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function Portal() {
     const router = useRouter();
+    const { signOut } = useAuthActions();
+    const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+    const convexUser = useQuery(api.users.currentUser);
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
 
-    // User account
-    const [user, setUser] = useState<UserAccount | null>(null);
+    // Auth gate — redirect if not authenticated
+    useEffect(() => {
+        if (!isAuthLoading && !isAuthenticated) {
+            router.push('/');
+        }
+    }, [isAuthLoading, isAuthenticated, router]);
+
+    // Derive user from Convex query
+    const user: UserAccount | null = convexUser ? {
+        firstName: convexUser.firstName,
+        lastName: convexUser.lastName,
+        email: convexUser.email,
+        role: convexUser.role,
+    } : null;
     const [showWelcome, setShowWelcome] = useState(false);
 
     // Itineraries
@@ -591,26 +678,6 @@ export default function Portal() {
         firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '',
         gender: '', email: '', phone: '', nationality: '',
     });
-
-    // Load user + travelers from localStorage
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            const raw = localStorage.getItem('isa_user');
-            if (raw) {
-                const parsed = JSON.parse(raw) as UserAccount;
-                setUser(parsed);
-                if (parsed.isNew) {
-                    setShowWelcome(true);
-                    localStorage.setItem('isa_user', JSON.stringify({ ...parsed, isNew: false }));
-                }
-            }
-            const rawT = localStorage.getItem('isa_travelers');
-            if (rawT) setTravelers(JSON.parse(rawT));
-            const rawI = localStorage.getItem('isa_itineraries');
-            if (rawI) setItineraries(JSON.parse(rawI));
-        } catch { /* ignore */ }
-    }, []);
 
     const saveTravelers = (list: Traveler[]) => {
         setTravelers(list);
@@ -691,13 +758,8 @@ export default function Portal() {
 
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleSignOut = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('isa_user');
-            localStorage.removeItem('isa_travelers');
-            localStorage.removeItem('isa_itineraries');
-            try { sessionStorage.clear(); } catch { /* */ }
-        }
+    const handleSignOut = async () => {
+        await signOut();
         router.push('/');
     };
 
@@ -707,6 +769,7 @@ export default function Portal() {
     useEffect(() => { if (hotelCheckin && hotelCheckout && hotelCheckout <= hotelCheckin) setHotelCheckout(''); }, [hotelCheckin, hotelCheckout]);
 
     const canSearchFlights = flightOrigin && flightDest && flightOrigin !== flightDest && flightDepart && (flightTripType === 'OW' || flightReturn);
+
 
     // ── API Calls ────────────────────────────────────────────────────────────
 
@@ -721,7 +784,9 @@ export default function Portal() {
             const passengers: { type: string; quantity: number }[] = [{ type: 'ADT', quantity: flightAdults }];
             if (flightChildren > 0) passengers.push({ type: 'CNN', quantity: flightChildren });
 
-            const res = await fetch('/api/farenexus/search', {
+            const minLoadTime = new Promise(resolve => setTimeout(resolve, 4500));
+
+            const apiCall = fetch('/api/farenexus/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -730,10 +795,14 @@ export default function Portal() {
                     returnDate: flightTripType === 'RT' ? flightReturn : undefined,
                     passengers, tripType: flightTripType, travelClass: 'ECO',
                 }),
+            }).then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Search failed');
+                return data;
             });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Search failed');
+            const [data] = await Promise.all([apiCall, minLoadTime]);
+
             const parsed = parseFareNexusResponse(data);
             setFlightResults(parsed);
             if (parsed.length === 0) setFlightError('No flights found. Try different dates or airports.');
@@ -768,17 +837,23 @@ export default function Portal() {
         setHasSearchedHotels(true);
 
         try {
-            const res = await fetch('/api/hotels/search', {
+            const minLoadTime = new Promise(resolve => setTimeout(resolve, 4500));
+
+            const apiCall = fetch('/api/hotels/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cityName: searchCity, countryCode: searchCountry,
                     checkin, checkout, adults: hotelAdults, rooms: hotelRooms,
                 }),
+            }).then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Hotel search failed');
+                return data;
             });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Hotel search failed');
+            const [data] = await Promise.all([apiCall, minLoadTime]);
+
             setRawHotelData(data);
             const parsed = parseLiteApiResponse(data);
             setHotelResults(parsed);
@@ -789,6 +864,18 @@ export default function Portal() {
             setIsSearchingHotels(false);
         }
     }, [hotelCity, hotelCountry, hotelCheckin, hotelCheckout, hotelAdults, hotelRooms]);
+
+    // Show loading screen while auth state resolves (placed after all hooks)
+    if (isAuthLoading) {
+        return (
+            <main className={styles.portalPage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
+                    <Loader2 size={40} className={styles.spinner} style={{ color: 'var(--isa-red)', marginBottom: '16px' }} />
+                    <p style={{ color: '#888', fontSize: '1.1rem', fontWeight: 500 }}>Loading your portal...</p>
+                </div>
+            </main>
+        );
+    }
 
     // Filtered flights
     const filteredFlights = flightResults.filter(f => {
@@ -819,6 +906,8 @@ export default function Portal() {
                 currency: target.currency,
                 origin: target.outbound.departAirport,
                 destination: target.outbound.arriveAirport,
+                ...(target.outbound.departDate ? { departDate: target.outbound.departDate } : {}),
+                ...(target.inbound?.departDate ? { returnDate: target.inbound.departDate } : {}),
             });
             router.push(`/booking?${params.toString()}`);
         } catch {
@@ -1012,58 +1101,32 @@ export default function Portal() {
                         </div>
 
                         {/* Search Form */}
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
-                            <div className={styles.ftTripToggle}>
-                                <button className={`${styles.ftToggleBtn} ${flightTripType === 'RT' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('RT')}>Round Trip</button>
-                                <button className={`${styles.ftToggleBtn} ${flightTripType === 'OW' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('OW')}>One Way</button>
-                            </div>
-                            <div className={styles.ftSearchGrid}>
-                                <div><label className={styles.ftLabel}>From</label><AirportSearchInput value={flightOrigin} onChange={setFlightOrigin} placeholder="City or airport code" /></div>
-                                <div><label className={styles.ftLabel}>To</label><AirportSearchInput value={flightDest} onChange={setFlightDest} placeholder="City or airport code" /></div>
-                                <div><label className={styles.ftLabel}>Departure</label><CustomDatePicker value={flightDepart} onChange={setFlightDepart} placeholder="Select date" minDate={todayStr} /></div>
-                                {flightTripType === 'RT' && (<div><label className={styles.ftLabel}>Return</label><CustomDatePicker value={flightReturn} onChange={setFlightReturn} placeholder="Select date" minDate={flightDepart || todayStr} /></div>)}
-                            </div>
-                            <div className={styles.ftPaxRow}>
-                                <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Adults</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.max(1, flightAdults - 1))}>−</button><span className={styles.ftPaxCount}>{flightAdults}</span><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.min(9 - flightChildren, flightAdults + 1))}>+</button></div></div>
-                                <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Children</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.max(0, flightChildren - 1))}>−</button><span className={styles.ftPaxCount}>{flightChildren}</span><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.min(9 - flightAdults, flightChildren + 1))}>+</button></div></div>
-                                <button className={styles.ftSearchBtn} onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}>
-                                    {isSearchingFlights ? <Loader2 size={20} className={styles.spinner} /> : <Search size={20} />}
-                                    <span>{isSearchingFlights ? 'Searching...' : 'Search Flights'}</span>
-                                </button>
-                            </div>
-                            {flightOrigin && flightDest && flightOrigin === flightDest && (<div className={styles.ftError}>Origin and destination cannot be the same.</div>)}
-
-                            {/* Filter bar — appears after search */}
-                            {(hasSearchedFlights && flightResults.length > 0) && (
-                                <div className={styles.ftFilterBar}>
-                                    <span className={styles.ftFilterLabel}>Select departure from {flightOrigin}</span>
-                                    <div className={styles.ftFilters}>
-                                        <select className={styles.ftFilterSelect} value={filterStops} onChange={(e) => setFilterStops(e.target.value as 'any' | 'nonstop' | 'one_stop')}>
-                                            <option value="any">Any stops</option>
-                                            <option value="nonstop">Nonstop only</option>
-                                            <option value="one_stop">1 stop or fewer</option>
-                                        </select>
-                                        <select className={styles.ftFilterSelect} value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)}>
-                                            <option value="">All airlines</option>
-                                            {uniqueAirlines.map(([code, name]) => (<option key={code} value={code}>{name}</option>))}
-                                        </select>
-                                        {(filterStops !== 'any' || filterAirline) && (
-                                            <button className={styles.ftFilterClear} onClick={() => { setFilterStops('any'); setFilterAirline(''); }}>Clear filters</button>
-                                        )}
-                                    </div>
+                        {!isSearchingFlights && (!hasSearchedFlights || flightResults.length === 0) && (
+                            <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
+                                <div className={styles.ftTripToggle}>
+                                    <button className={`${styles.ftToggleBtn} ${flightTripType === 'RT' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('RT')}>Round Trip</button>
+                                    <button className={`${styles.ftToggleBtn} ${flightTripType === 'OW' ? styles.ftToggleActive : ''}`} onClick={() => setFlightTripType('OW')}>One Way</button>
                                 </div>
-                            )}
-                        </div>
+                                <div className={styles.ftSearchGrid}>
+                                    <div><label className={styles.ftLabel}>From</label><AirportSearchInput value={flightOrigin} onChange={setFlightOrigin} placeholder="City or airport code" /></div>
+                                    <div><label className={styles.ftLabel}>To</label><AirportSearchInput value={flightDest} onChange={setFlightDest} placeholder="City or airport code" /></div>
+                                    <div><label className={styles.ftLabel}>Departure</label><CustomDatePicker value={flightDepart} onChange={setFlightDepart} placeholder="Select date" minDate={todayStr} /></div>
+                                    {flightTripType === 'RT' && (<div><label className={styles.ftLabel}>Return</label><CustomDatePicker value={flightReturn} onChange={setFlightReturn} placeholder="Select date" minDate={flightDepart || todayStr} /></div>)}
+                                </div>
+                                <div className={styles.ftPaxRow}>
+                                    <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Adults</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.max(1, flightAdults - 1))}>−</button><span className={styles.ftPaxCount}>{flightAdults}</span><button className={styles.ftPaxBtn} onClick={() => setFlightAdults(Math.min(9 - flightChildren, flightAdults + 1))}>+</button></div></div>
+                                    <div className={styles.ftPaxControl}><span className={styles.ftPaxLabel}>Children</span><div className={styles.ftPaxBtns}><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.max(0, flightChildren - 1))}>−</button><span className={styles.ftPaxCount}>{flightChildren}</span><button className={styles.ftPaxBtn} onClick={() => setFlightChildren(Math.min(9 - flightAdults, flightChildren + 1))}>+</button></div></div>
+                                    <button className={styles.ftSearchBtn} onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}>
+                                        {isSearchingFlights ? <Loader2 size={20} className={styles.spinner} /> : <Search size={20} />}
+                                        <span>{isSearchingFlights ? 'Searching...' : 'Search Flights'}</span>
+                                    </button>
+                                </div>
+                                {flightOrigin && flightDest && flightOrigin === flightDest && (<div className={styles.ftError}>Origin and destination cannot be the same.</div>)}
+                            </div>
+                        )}
 
                         {/* Loading overlay */}
-                        {isSearchingFlights && (
-                            <div className={styles.ftLoadingOverlay}><div className={styles.ftLoadingModal}>
-                                <Plane size={32} strokeWidth={1.5} />
-                                <h3>{flightTripType === 'RT' ? 'Round Trip' : 'One Way'} — {flightOrigin} → {flightDest}</h3>
-                                <p>Checking with airlines...</p>
-                                <div className={styles.ftLoadingBar} />
-                            </div></div>
-                        )}
+                        {isSearchingFlights && <SearchLoadingSequence type="flights" />}
 
                         {/* Reviewing overlay */}
                         {isReviewing && (
@@ -1080,8 +1143,31 @@ export default function Portal() {
                         {/* Results */}
                         {!isSearchingFlights && hasSearchedFlights && flightResults.length > 0 && (
                             <div className={`${styles.card} ${styles.cardFull}`}>
+                                <div className={styles.ftFilterBar} style={{ marginTop: 0, borderTop: 'none', paddingTop: 0, paddingBottom: 24, marginBottom: 24, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                                    <span className={styles.ftFilterLabel}>Select departure from {flightOrigin}</span>
+                                    <div className={styles.ftFilters}>
+                                        <select className={styles.ftFilterSelect} value={filterStops} onChange={(e) => setFilterStops(e.target.value as 'any' | 'nonstop' | 'one_stop')}>
+                                            <option value="any">Any stops</option>
+                                            <option value="nonstop">Nonstop only</option>
+                                            <option value="one_stop">1 stop or fewer</option>
+                                        </select>
+                                        <select className={styles.ftFilterSelect} value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)}>
+                                            <option value="">All airlines</option>
+                                            {uniqueAirlines.map(([code, name]) => (<option key={code} value={code}>{name}</option>))}
+                                        </select>
+                                        {(filterStops !== 'any' || filterAirline) && (
+                                            <button className={styles.ftFilterClear} onClick={() => { setFilterStops('any'); setFilterAirline(''); }}>Clear filters</button>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className={styles.ftResultsHeader}>
-                                    <h3>Available Flights</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <button onClick={() => { setFlightResults([]); setHasSearchedFlights(false); }} className={styles.backToSearchBtn}>
+                                            <ArrowLeft size={18} /> Back to Search
+                                        </button>
+                                        <h3>Available Flights</h3>
+                                    </div>
                                     <span className={styles.ftResultsSub}>{filteredFlights.length} of {flightResults.length} result{flightResults.length !== 1 ? 's' : ''}</span>
                                 </div>
 
@@ -1095,7 +1181,7 @@ export default function Portal() {
                                             <div key={flight.id} className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`} onClick={() => setDetailFlight(flight)}>
                                                 <div className={styles.ftCardAirline}>
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={28} height={28} className={styles.ftAirlineLogo} />}
+                                                    {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={40} height={40} className={styles.ftAirlineLogo} />}
                                                     <span className={styles.ftAirlineName}>{flight.carrierName}</span>
                                                 </div>
                                                 <div className={styles.ftCardLegs}>
@@ -1197,68 +1283,59 @@ export default function Portal() {
                         </div>
 
                         {/* Search */}
-                        <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
-                            <div className={styles.htSearchGrid}>
-                                <div>
-                                    <label className={styles.ftLabel}>Destination</label>
-                                    <div className={styles.htInputWrapper}>
-                                        <MapPin size={16} strokeWidth={1.5} className={styles.htInputIcon} />
-                                        <input type="text" className={styles.htInput} placeholder="Where are you going?" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} />
+                        {!isSearchingHotels && (!hasSearchedHotels || hotelResults.length === 0) && (
+                            <div className={`${styles.card} ${styles.cardFull}`} style={{ overflow: 'visible' }}>
+                                <div className={styles.htSearchGrid}>
+                                    <div>
+                                        <label className={styles.ftLabel}>Destination</label>
+                                        <div className={styles.htInputWrapper}>
+                                            <MapPin size={16} strokeWidth={1.5} className={styles.htInputIcon} />
+                                            <input type="text" className={styles.htInput} placeholder="Where are you going?" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} />
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className={styles.ftLabel}>Check-in</label>
-                                    <CustomDatePicker value={hotelCheckin} onChange={setHotelCheckin} placeholder="Select date" minDate={todayStr} />
-                                </div>
-                                <div>
-                                    <label className={styles.ftLabel}>Check-out</label>
-                                    <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="Select date" minDate={hotelCheckin || todayStr} />
-                                </div>
-                                <div>
-                                    <label className={styles.ftLabel}>Guests</label>
-                                    <div className={styles.htGuestControl}>
-                                        <div className={styles.htGuestGroup}>
-                                            <div className={styles.ftPaxBtns}>
-                                                <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
-                                                <span className={styles.ftPaxCount}>{hotelAdults}</span>
-                                                <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                    <div>
+                                        <label className={styles.ftLabel}>Check-in</label>
+                                        <CustomDatePicker value={hotelCheckin} onChange={setHotelCheckin} placeholder="Select date" minDate={todayStr} />
+                                    </div>
+                                    <div>
+                                        <label className={styles.ftLabel}>Check-out</label>
+                                        <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="Select date" minDate={hotelCheckin || todayStr} />
+                                    </div>
+                                    <div>
+                                        <label className={styles.ftLabel}>Guests</label>
+                                        <div className={styles.htGuestControl}>
+                                            <div className={styles.htGuestGroup}>
+                                                <div className={styles.ftPaxBtns}>
+                                                    <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}>−</button>
+                                                    <span className={styles.ftPaxCount}>{hotelAdults}</span>
+                                                    <button className={styles.ftPaxBtn} onClick={() => setHotelAdults(Math.min(6, hotelAdults + 1))}>+</button>
+                                                </div>
+                                                <span className={styles.htGuestLabel}>{hotelAdults === 1 ? 'adult' : 'adults'}</span>
                                             </div>
-                                            <span className={styles.htGuestLabel}>{hotelAdults === 1 ? 'adult' : 'adults'}</span>
-                                        </div>
-                                        <div className={styles.htGuestDivider} />
-                                        <div className={styles.htGuestGroup}>
-                                            <div className={styles.ftPaxBtns}>
-                                                <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}>−</button>
-                                                <span className={styles.ftPaxCount}>{hotelRooms}</span>
-                                                <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.min(4, hotelRooms + 1))}>+</button>
+                                            <div className={styles.htGuestDivider} />
+                                            <div className={styles.htGuestGroup}>
+                                                <div className={styles.ftPaxBtns}>
+                                                    <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}>−</button>
+                                                    <span className={styles.ftPaxCount}>{hotelRooms}</span>
+                                                    <button className={styles.ftPaxBtn} onClick={() => setHotelRooms(Math.min(4, hotelRooms + 1))}>+</button>
+                                                </div>
+                                                <span className={styles.htGuestLabel}>{hotelRooms === 1 ? 'room' : 'rooms'}</span>
                                             </div>
-                                            <span className={styles.htGuestLabel}>{hotelRooms === 1 ? 'room' : 'rooms'}</span>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <button className={styles.htSearchBtn} onClick={() => searchHotels()} disabled={!hotelCity || isSearchingHotels}>
-                                {isSearchingHotels ? <Loader2 size={18} className={styles.spinner} /> : <Search size={18} />}
-                                <span>{isSearchingHotels ? 'Searching...' : 'Search Hotels'}</span>
-                            </button>
-                        </div>
-
-                        {/* Loading */}
-                        {isSearchingHotels && (
-                            <div className={styles.htSkeletonGrid}>
-                                {[1, 2, 3, 4, 5, 6].map(i => (
-                                    <div key={i} className={styles.htSkeleton}>
-                                        <div className={styles.htSkeletonImg} />
-                                        <div className={styles.htSkeletonBody}>
-                                            <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
-                                            <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
-                                            <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
-                                        </div>
-                                    </div>
-                                ))}
+                                <div className={styles.htSearchAction}>
+                                    <button className={styles.htSearchBtn} onClick={() => searchHotels()} disabled={!hotelCity || isSearchingHotels}>
+                                        {isSearchingHotels ? <Loader2 size={18} className={styles.spinner} /> : <Search size={18} />}
+                                        <span>{isSearchingHotels ? 'Searching...' : 'Search Hotels'}</span>
+                                    </button>
+                                </div>
                             </div>
                         )}
+
+                        {/* Loading */}
+                        {isSearchingHotels && <SearchLoadingSequence type="hotels" />}
 
                         {/* Error (API failure) */}
                         {hotelError && !isSearchingHotels && (
@@ -1281,7 +1358,12 @@ export default function Portal() {
                         {!isSearchingHotels && hotelResults.length > 0 && (
                             <>
                                 <div className={styles.htResultsBar}>
-                                    <span className={styles.htResultsCount}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <button onClick={() => { setHotelResults([]); setHasSearchedHotels(false); }} className={styles.backToSearchBtn}>
+                                            <ArrowLeft size={18} /> Back to Search
+                                        </button>
+                                        <span className={styles.htResultsCount}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''}</span>
+                                    </div>
                                     <span className={styles.htResultsCity}>in {hotelCity}</span>
                                 </div>
                                 <div className={styles.htGrid}>
@@ -1521,40 +1603,40 @@ export default function Portal() {
                             const q = searchQuery.toLowerCase().trim();
                             const filtered = q ? travelers.filter(t => `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) || getRoleLabel(t.role).toLowerCase().includes(q) || t.email.toLowerCase().includes(q)) : travelers;
                             return (
-                            <div className={`${styles.card} ${styles.cardFull}`}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{q ? `${filtered.length} of ${travelers.length}` : travelers.length} Traveler{(q ? filtered.length : travelers.length) !== 1 ? 's' : ''}{q ? ` matching "${searchQuery}"` : ''}</h3>
-                                </div>
-                                {filtered.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
-                                        <Search size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-                                        <p style={{ fontSize: '0.9rem' }}>No travelers match &ldquo;{searchQuery}&rdquo;</p>
+                                <div className={`${styles.card} ${styles.cardFull}`}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{q ? `${filtered.length} of ${travelers.length}` : travelers.length} Traveler{(q ? filtered.length : travelers.length) !== 1 ? 's' : ''}{q ? ` matching "${searchQuery}"` : ''}</h3>
                                     </div>
-                                ) : (
-                                <div className={styles.tList}>
-                                    {filtered.map(t => (
-                                        <div key={t.id} className={styles.tCard}>
-                                            <div className={styles.tCardLeft}>
-                                                <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
-                                                    {getInitials(t.firstName, t.lastName)}
-                                                </div>
-                                                <div className={styles.tCardInfo}>
-                                                    <div className={styles.tCardName}>{t.firstName} {t.lastName}</div>
-                                                    <div className={styles.tCardMeta}>
-                                                        <span className={styles.tCardRole} style={{ color: ROLE_COLORS[t.role] || '#999' }}>{getRoleLabel(t.role)}</span>
-                                                        {t.email && <span className={styles.tCardEmail}>{t.email}</span>}
+                                    {filtered.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                                            <Search size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                                            <p style={{ fontSize: '0.9rem' }}>No travelers match &ldquo;{searchQuery}&rdquo;</p>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.tList}>
+                                            {filtered.map(t => (
+                                                <div key={t.id} className={styles.tCard}>
+                                                    <div className={styles.tCardLeft}>
+                                                        <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
+                                                            {getInitials(t.firstName, t.lastName)}
+                                                        </div>
+                                                        <div className={styles.tCardInfo}>
+                                                            <div className={styles.tCardName}>{t.firstName} {t.lastName}</div>
+                                                            <div className={styles.tCardMeta}>
+                                                                <span className={styles.tCardRole} style={{ color: ROLE_COLORS[t.role] || '#999' }}>{getRoleLabel(t.role)}</span>
+                                                                {t.email && <span className={styles.tCardEmail}>{t.email}</span>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.tCardActions}>
+                                                        <button className={styles.tEditBtn} onClick={() => startEdit(t)}>Edit</button>
+                                                        <button className={styles.tDeleteBtn} onClick={() => handleDeleteTraveler(t.id)}>Remove</button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className={styles.tCardActions}>
-                                                <button className={styles.tEditBtn} onClick={() => startEdit(t)}>Edit</button>
-                                                <button className={styles.tDeleteBtn} onClick={() => handleDeleteTraveler(t.id)}>Remove</button>
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                                )}
-                            </div>
                             );
                         })()}
                     </div>

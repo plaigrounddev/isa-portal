@@ -627,16 +627,20 @@ function BookingInner() {
         const dest = searchParams.get('destination');
 
         if (bookKey && price && orig && dest) {
+            const dep = searchParams.get('departDate') || '';
+            const ret = searchParams.get('returnDate') || '';
             setPrefilledBookKey(bookKey);
             setOrigin(orig);
             setDestination(dest);
+            if (dep) setDepartDate(dep);
+            if (ret) setReturnDate(ret);
             setBookingMode('self');
             setSelectedFlight({
                 id: 'prefilled',
                 reviewKey: '',
                 outbound: {
                     segments: [], departAirport: orig, arriveAirport: dest,
-                    departTime: '', arriveTime: '', departDate: '', arriveDate: '',
+                    departTime: '', arriveTime: '', departDate: dep, arriveDate: '',
                     duration: '', stops: 0, carrier: '', carrierName: '',
                 },
                 price: parseFloat(price) || 0,
@@ -645,7 +649,7 @@ function BookingInner() {
                 carrierLogo: '',
             });
             setAdults(1);
-            setStep(3);
+            setStep(2);
         }
     }, [searchParams]);
 
@@ -1213,8 +1217,25 @@ function BookingInner() {
             case 2:
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
-                        <div className={styles.stepLabel}>STEP 02/{String(SELF_TOTAL).padStart(2, '0')}</div>
+                        {prefilledBookKey ? (
+                            <div className={styles.stepLabel}>CHECKOUT</div>
+                        ) : (
+                            <div className={styles.stepLabel}>STEP 02/{String(SELF_TOTAL).padStart(2, '0')}</div>
+                        )}
                         <h2 className={styles.question}>Need a Hotel?</h2>
+
+                        {/* Flight summary when coming from the portal */}
+                        {selectedFlight && prefilledBookKey && wantsHotel === null && (
+                            <div className={styles.reviewCard} style={{ marginBottom: '24px' }}>
+                                <div className={styles.reviewCardHeader}><Plane size={20} strokeWidth={1.5} /><span>Your Selected Flight</span></div>
+                                <div className={styles.reviewCardBody}>
+                                    <div className={styles.reviewRow}>
+                                        <span className={styles.reviewBold}>{selectedFlight.outbound.departAirport} → {selectedFlight.outbound.arriveAirport}</span>
+                                        <span className={styles.reviewBold}>{formatPrice(selectedFlight.price, selectedFlight.currency)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {wantsHotel === null && (
                             <>
@@ -1232,7 +1253,7 @@ function BookingInner() {
                                     </div>
                                 </div>
                                 <div className={styles.actions}>
-                                    <button className={styles.backBtn} onClick={() => setStep(1)}><ArrowLeft size={18} /> Back</button>
+                                    <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(1)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
                                 </div>
                             </>
                         )}
@@ -1416,7 +1437,7 @@ function BookingInner() {
                         })}
 
                         <div className={styles.actions} style={{ marginTop: '32px' }}>
-                            <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(2)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
+                            <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
                             <button className="geometric-btn" onClick={() => setStep(4)} disabled={!allTravelersValid}
                                 style={{ flex: 1, opacity: allTravelersValid ? 1 : 0.5, pointerEvents: allTravelersValid ? 'auto' : 'none' }}>
                                 Review Booking

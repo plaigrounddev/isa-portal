@@ -5,6 +5,14 @@ import { v } from "convex/values";
 export default defineSchema({
     ...authTables,
 
+    userProfiles: defineTable({
+        userId: v.string(),
+        firstName: v.string(),
+        lastName: v.string(),
+        email: v.string(),
+        role: v.string(),
+    }).index("by_userId", ["userId"]),
+
     travelers: defineTable({
         userId: v.string(),
         firstName: v.string(),

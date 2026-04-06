@@ -1,6 +1,9 @@
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthActions } from '@convex-dev/auth/react';
+import { useConvexAuth, useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import {
     LayoutGrid,
     Plane,
@@ -633,11 +636,26 @@ const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
 
 export default function Portal() {
     const router = useRouter();
+    const { signOut } = useAuthActions();
+    const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+    const convexUser = useQuery(api.users.currentUser);
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
 
-    // User account
-    const [user, setUser] = useState<UserAccount | null>(null);
+    // Auth gate — redirect if not authenticated
+    useEffect(() => {
+        if (!isAuthLoading && !isAuthenticated) {
+            router.push('/');
+        }
+    }, [isAuthLoading, isAuthenticated, router]);
+
+    // Derive user from Convex query
+    const user: UserAccount | null = convexUser ? {
+        firstName: convexUser.firstName,
+        lastName: convexUser.lastName,
+        email: convexUser.email,
+        role: convexUser.role,
+    } : null;
     const [showWelcome, setShowWelcome] = useState(false);
 
     // Itineraries
@@ -660,26 +678,6 @@ export default function Portal() {
         firstName: '', lastName: '', role: 'athlete' as const, dateOfBirth: '',
         gender: '', email: '', phone: '', nationality: '',
     });
-
-    // Load user + travelers from localStorage
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            const raw = localStorage.getItem('isa_user');
-            if (raw) {
-                const parsed = JSON.parse(raw) as UserAccount;
-                setUser(parsed);
-                if (parsed.isNew) {
-                    setShowWelcome(true);
-                    localStorage.setItem('isa_user', JSON.stringify({ ...parsed, isNew: false }));
-                }
-            }
-            const rawT = localStorage.getItem('isa_travelers');
-            if (rawT) setTravelers(JSON.parse(rawT));
-            const rawI = localStorage.getItem('isa_itineraries');
-            if (rawI) setItineraries(JSON.parse(rawI));
-        } catch { /* ignore */ }
-    }, []);
 
     const saveTravelers = (list: Traveler[]) => {
         setTravelers(list);
@@ -760,13 +758,8 @@ export default function Portal() {
 
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleSignOut = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('isa_user');
-            localStorage.removeItem('isa_travelers');
-            localStorage.removeItem('isa_itineraries');
-            try { sessionStorage.clear(); } catch { /* */ }
-        }
+    const handleSignOut = async () => {
+        await signOut();
         router.push('/');
     };
 
@@ -776,6 +769,7 @@ export default function Portal() {
     useEffect(() => { if (hotelCheckin && hotelCheckout && hotelCheckout <= hotelCheckin) setHotelCheckout(''); }, [hotelCheckin, hotelCheckout]);
 
     const canSearchFlights = flightOrigin && flightDest && flightOrigin !== flightDest && flightDepart && (flightTripType === 'OW' || flightReturn);
+
 
     // ── API Calls ────────────────────────────────────────────────────────────
 
@@ -870,6 +864,18 @@ export default function Portal() {
             setIsSearchingHotels(false);
         }
     }, [hotelCity, hotelCountry, hotelCheckin, hotelCheckout, hotelAdults, hotelRooms]);
+
+    // Show loading screen while auth state resolves (placed after all hooks)
+    if (isAuthLoading) {
+        return (
+            <main className={styles.portalPage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
+                    <Loader2 size={40} className={styles.spinner} style={{ color: 'var(--isa-red)', marginBottom: '16px' }} />
+                    <p style={{ color: '#888', fontSize: '1.1rem', fontWeight: 500 }}>Loading your portal...</p>
+                </div>
+            </main>
+        );
+    }
 
     // Filtered flights
     const filteredFlights = flightResults.filter(f => {

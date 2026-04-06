@@ -1,39 +1,11 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthActions } from '@convex-dev/auth/react';
+import { useConvexAuth, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import styles from './page.module.css';
 import Image from 'next/image';
-
-function useAuth() {
-    const signInWithPassword = useCallback(async (
-        email: string, password: string, flow: 'signIn' | 'signUp',
-        profile?: { firstName?: string; lastName?: string; role?: string }
-    ) => {
-        if (typeof window !== 'undefined') {
-            if (flow === 'signIn') {
-                const raw = localStorage.getItem('isa_user');
-                if (!raw) throw new Error('No account found.');
-                const existing = JSON.parse(raw);
-                if (existing.email !== email) throw new Error('Invalid credentials.');
-            }
-
-            const existing: Record<string, string> = (() => {
-                try { const r = localStorage.getItem('isa_user'); return r ? JSON.parse(r) : {}; }
-                catch { return {}; }
-            })();
-
-            localStorage.setItem('isa_user', JSON.stringify({
-                firstName: profile?.firstName || existing.firstName || '',
-                lastName: profile?.lastName || existing.lastName || '',
-                email,
-                role: profile?.role || existing.role || 'parent',
-                isNew: flow === 'signUp',
-            }));
-        }
-    }, []);
-
-    return { signIn: signInWithPassword };
-}
 
 const ROLE_OPTIONS = [
   { value: 'parent', label: 'Parent / Guardian', desc: 'Booking travel for your child or family' },
@@ -45,6 +17,10 @@ const ROLE_OPTIONS = [
 
 export default function Home() {
   const router = useRouter();
+  const { signIn } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+  const storeUser = useMutation(api.users.storeUser);
+
   const [view, setView] = useState<'initial' | 'signin' | 'signup'>('initial');
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -57,9 +33,33 @@ export default function Home() {
   });
   const [signupError, setSignupError] = useState('');
 
-  const { signIn: authSignIn } = useAuth();
   const [authLoading, setAuthLoading] = useState(false);
   const [signInError, setSignInError] = useState('');
+
+  // Pending profile data to store after auth completes
+  const pendingProfile = useRef<{ firstName: string; lastName: string; email: string; role: string } | null>(null);
+
+  // When auth completes, store profile and redirect
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const profile = pendingProfile.current;
+    if (profile) {
+      pendingProfile.current = null;
+      storeUser(profile)
+        .then(() => {
+          setSignupStep(3);
+          setAuthLoading(false);
+        })
+        .catch(() => {
+          setSignupError('Profile saved, but there was an issue. Please update your profile in the portal.');
+          setAuthLoading(false);
+          router.push('/portal');
+        });
+    } else {
+      // Already authenticated (returning user) — redirect
+      router.push('/portal');
+    }
+  }, [isAuthenticated, router, storeUser]);
 
   const resetSignup = () => {
     setSignupStep(1);
@@ -73,21 +73,9 @@ export default function Home() {
     setSignInError('');
     setAuthLoading(true);
     try {
-      await authSignIn(email, password, 'signIn');
+      await signIn("password", { email, password, flow: "signIn" });
       router.push('/portal');
     } catch {
-      if (typeof window !== 'undefined') {
-        const raw = localStorage.getItem('isa_user');
-        if (raw) {
-          try {
-            const existing = JSON.parse(raw);
-            if (existing.email === email) {
-              router.push('/portal');
-              return;
-            }
-          } catch { /* ignore */ }
-        }
-      }
       setSignInError('Invalid email or password. Please try again.');
     } finally {
       setAuthLoading(false);
@@ -121,16 +109,23 @@ export default function Home() {
       }
       setAuthLoading(true);
       try {
-        await authSignIn(
-          signupData.email.trim(),
-          signupData.password,
-          'signUp',
-          { firstName: signupData.firstName.trim(), lastName: signupData.lastName.trim(), role: signupData.role }
-        );
-        setSignupStep(3);
+        // Store profile data for the useEffect to pick up after auth completes
+        pendingProfile.current = {
+          firstName: signupData.firstName.trim(),
+          lastName: signupData.lastName.trim(),
+          email: signupData.email.trim(),
+          role: signupData.role,
+        };
+        await signIn("password", {
+          email: signupData.email.trim(),
+          password: signupData.password,
+          name: `${signupData.firstName.trim()} ${signupData.lastName.trim()}`,
+          flow: "signUp",
+        });
+        // Auth state change will trigger the useEffect above to call storeUser
       } catch {
+        pendingProfile.current = null;
         setSignupError('Account creation failed. This email may already be registered.');
-      } finally {
         setAuthLoading(false);
       }
     }

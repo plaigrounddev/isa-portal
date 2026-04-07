@@ -1,5 +1,6 @@
 .bookingLayout {
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background-color: white;
@@ -51,7 +52,9 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 20px 40px 100px;
+    padding: 20px 40px 120px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .stepContainer {
@@ -397,11 +400,30 @@
 }
 
 .resultsHeader {
+    position: sticky;
+    top: -20px;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 40px 0 20px;
+    margin-top: -40px;
     margin-bottom: 16px;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
+}
+
+.resultsHeader::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), transparent);
+    pointer-events: none;
 }
 
 .resultsTitle {
@@ -589,8 +611,9 @@
     right: 0;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 16px;
-    padding: 16px 40px;
+    padding: 16px max(40px, calc(50vw - 550px));
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -1074,13 +1097,6 @@
     margin-bottom: 16px;
 }
 
-.actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 16px;
-    margin-top: 20px;
-}
 
 .customSelectWrapper {
     position: relative;
@@ -1291,7 +1307,7 @@
 
 @media (max-width: 768px) {
     .header { padding: 24px 20px; }
-    .bookingContent { padding: 24px 20px 80px 20px; align-items: flex-start; }
+    .bookingContent { padding: 24px 20px 100px 20px; align-items: flex-start; }
     .stepContainer { padding: 0; }
     .question { font-size: 1.8rem; margin-bottom: 24px; overflow-wrap: break-word; }
 

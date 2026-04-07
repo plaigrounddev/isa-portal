@@ -952,13 +952,6 @@ function BookingInner() {
                             {bookingMode === 'agent' && <div className={styles.modeCheck}><CheckIcon color="white" /></div>}
                         </div>
                     </div>
-                    <div className={styles.floatingBar}>
-                        <button className={styles.backBtn} onClick={() => router.push('/portal')}><ArrowLeft size={18} /> Back</button>
-                        <button className="geometric-btn" onClick={() => setStep(1)} disabled={!bookingMode}
-                            style={{ flex: 1, opacity: bookingMode ? 1 : 0.5, pointerEvents: bookingMode ? 'auto' : 'none' }}>
-                            Continue
-                        </button>
-                    </div>
                 </div>
             );
         }
@@ -972,10 +965,6 @@ function BookingInner() {
                             <div className={styles.stepLabel}>STEP 01/{String(AGENT_TOTAL).padStart(2, '0')}</div>
                             <h2 className={styles.question}>What is your full legal name?</h2>
                             <input type="text" className={styles.inputField} placeholder="First and Last Name" value={agentForm.name} onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })} autoFocus />
-                            <div className={styles.floatingBar}>
-                                <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
-                                <button className="geometric-btn" onClick={() => setStep(2)} disabled={!agentForm.name} style={{ flex: 1, opacity: agentForm.name ? 1 : 0.5, pointerEvents: agentForm.name ? 'auto' : 'none' }}>Next</button>
-                            </div>
                         </div>
                     );
                 case 2:
@@ -985,10 +974,6 @@ function BookingInner() {
                             <h2 className={styles.question}>How can we reach you?</h2>
                             <input type="email" className={styles.inputField} placeholder="Email Address" value={agentForm.email} onChange={(e) => setAgentForm({ ...agentForm, email: e.target.value })} autoFocus />
                             <input type="tel" className={styles.inputField} placeholder="+1 (234) 567-8900" value={agentForm.phone} onChange={(e) => setAgentForm({ ...agentForm, phone: formatPhoneNumber(e.target.value, agentForm.phone) })} />
-                            <div className={styles.floatingBar}>
-                                <button className={styles.backBtn} onClick={() => setStep(1)}><ArrowLeft size={18} /> Back</button>
-                                <button className="geometric-btn" onClick={() => setStep(3)} disabled={!isValidEmail(agentForm.email) || !agentForm.phone} style={{ flex: 1, opacity: (isValidEmail(agentForm.email) && agentForm.phone) ? 1 : 0.5, pointerEvents: (isValidEmail(agentForm.email) && agentForm.phone) ? 'auto' : 'none' }}>Next</button>
-                            </div>
                         </div>
                     );
                 case 3:
@@ -1002,10 +987,6 @@ function BookingInner() {
                                 <div style={{ width: '100%' }}><label className={styles.dateLabel}>Return Date</label><CustomDatePicker value={agentForm.endDate} onChange={(val) => setAgentForm({ ...agentForm, endDate: val })} placeholder="mm/dd/yyyy" minDate={agentForm.startDate} /></div>
                             </div>
                             <textarea className={styles.textArea} placeholder="Tell your agent what you need: number of travelers, flight preferences, hotel requirements, special requests..." value={agentForm.agentNotes} onChange={(e) => setAgentForm({ ...agentForm, agentNotes: e.target.value })} rows={5} />
-                            <div className={styles.floatingBar}>
-                                <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
-                                <button className="geometric-btn" onClick={() => setStep(4)} style={{ flex: 1 }}>Submit Request</button>
-                            </div>
                         </div>
                     );
                 case 4:
@@ -1018,9 +999,6 @@ function BookingInner() {
                             <p className={styles.optionDesc} style={{ fontSize: '1.1rem', marginBottom: '40px' }}>
                                 Thank you, {agentForm.name}. A dedicated CTMS travel agent will contact you within 1 hour to coordinate your full itinerary.
                             </p>
-                            <div className={styles.floatingBar}>
-                                <button className="geometric-btn" onClick={() => router.push('/portal')} style={{ flex: 1 }}>Back to Dashboard</button>
-                            </div>
                         </div>
                     );
             }
@@ -1114,14 +1092,6 @@ function BookingInner() {
                                         <p className={styles.loadingText}>Searching across airlines...</p>
                                     </div>
                                 )}
-
-                                <div className={styles.floatingBar}>
-                                    <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
-                                    <button className="geometric-btn" onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}
-                                        style={{ flex: 1, opacity: canSearchFlights && !isSearchingFlights ? 1 : 0.5, pointerEvents: canSearchFlights && !isSearchingFlights ? 'auto' : 'none' }}>
-                                        {isSearchingFlights ? <><Loader2 size={20} className={styles.spinner} /> Searching Flights...</> : 'Search Flights'}
-                                    </button>
-                                </div>
                             </>
                         )}
 
@@ -1202,13 +1172,6 @@ function BookingInner() {
 
                         {/* Floating bottom bar for results view */}
                         {showFlightResults && (
-                            <div className={styles.floatingBar}>
-                                <button className={styles.backBtn} onClick={() => { setFlightResults([]); setHasSearchedFlights(false); setSelectedFlight(null); }}><ArrowLeft size={18} /> Back</button>
-                                <button className="geometric-btn" onClick={() => setStep(2)} disabled={!selectedFlight}
-                                    style={{ flex: 1, opacity: selectedFlight ? 1 : 0.5, pointerEvents: selectedFlight ? 'auto' : 'none' }}>
-                                    {selectedFlight ? `Continue · ${formatPrice(selectedFlight.price, selectedFlight.currency)}` : 'Select a flight to continue'}
-                                </button>
-                            </div>
                         )}
                     </div>
                 );
@@ -1253,9 +1216,6 @@ function BookingInner() {
                                         <div className={styles.modeDesc}>Skip hotels and proceed to traveler details.</div>
                                     </div>
                                 </div>
-                                <div className={styles.floatingBar}>
-                                    <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(1)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
-                                </div>
                             </>
                         )}
 
@@ -1298,14 +1258,6 @@ function BookingInner() {
                                                     <p className={styles.loadingText}>Searching hotels in {hotelCity}...</p>
                                                 </div>
                                             )}
-
-                                            <div className={styles.floatingBar}>
-                                                <button className={styles.backBtn} onClick={() => { setWantsHotel(null); setHasSearchedHotels(false); }}><ArrowLeft size={18} /> Back</button>
-                                                <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout || isSearchingHotels}
-                                                    style={{ flex: 1, opacity: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 'auto' : 'none' }}>
-                                                    {isSearchingHotels ? <><Loader2 size={20} className={styles.spinner} /> Searching Hotels...</> : 'Search Hotels'}
-                                                </button>
-                                            </div>
                                         </>
                                     )}
 
@@ -1355,12 +1307,6 @@ function BookingInner() {
                                             </div>
 
                                             {/* Floating bottom bar */}
-                                            <div className={styles.floatingBar}>
-                                                <button className={styles.backBtn} onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setSelectedHotel(null); }}><ArrowLeft size={18} /> Back</button>
-                                                <button className="geometric-btn" onClick={() => setStep(3)} style={{ flex: 1 }}>
-                                                    {selectedHotel ? `Continue · ${formatPrice(selectedHotel.price, selectedHotel.currency)}` : 'Skip Hotels'}
-                                                </button>
-                                            </div>
                                         </>
                                     )}
                                 </>
@@ -1459,14 +1405,6 @@ function BookingInner() {
                             </div>
                             );
                         })}
-
-                        <div className={styles.floatingBar}>
-                            <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
-                            <button className="geometric-btn" onClick={() => setStep(4)} disabled={!allTravelersValid}
-                                style={{ flex: 1, opacity: allTravelersValid ? 1 : 0.5, pointerEvents: allTravelersValid ? 'auto' : 'none' }}>
-                                Review Booking
-                            </button>
-                        </div>
                     </div>
                 );
 
@@ -1549,14 +1487,6 @@ function BookingInner() {
                         </div>
 
                         {bookingError && <div className={styles.searchError}>{bookingError}</div>}
-
-                        <div className={styles.floatingBar}>
-                            <button className={styles.backBtn} onClick={() => setStep(3)}><ArrowLeft size={18} /> Back</button>
-                            <button className="geometric-btn" onClick={confirmBooking} disabled={isBooking}
-                                style={{ flex: 1, opacity: isBooking ? 0.7 : 1 }}>
-                                {isBooking ? <><Loader2 size={20} className={styles.spinner} /> Processing Booking...</> : 'Confirm Booking'}
-                            </button>
-                        </div>
                     </div>
                 );
 
@@ -1584,12 +1514,115 @@ function BookingInner() {
                         <p className={styles.optionDesc} style={{ fontSize: '0.95rem', marginBottom: '40px', color: '#888' }}>
                             A confirmation email has been sent to {travelers[0]?.email}. Our CTMS agents are finalizing your itinerary.
                         </p>
-                        <div className={styles.floatingBar}>
-                            <button className="geometric-btn" onClick={() => router.push('/portal')} style={{ flex: 1 }}>Go to Dashboard</button>
-                        </div>
                     </div>
                 );
         }
+    };
+
+
+    const renderFloatingBar = () => {
+        if (step === 0) {
+            return (
+                <div className={styles.floatingBar}>
+                    <button className={styles.backBtn} onClick={() => router.push('/portal')}><ArrowLeft size={18} /> Back</button>
+                    <button className="geometric-btn" onClick={() => setStep(1)} disabled={!bookingMode}
+                        style={{ flex: 1, opacity: bookingMode ? 1 : 0.5, pointerEvents: bookingMode ? 'auto' : 'none' }}>
+                        Continue
+                    </button>
+                </div>
+            );
+        }
+        if (bookingMode === 'agent') {
+            switch (step) {
+                case 1: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(2)} disabled={!agentForm.name} style={{ flex: 1, opacity: agentForm.name ? 1 : 0.5, pointerEvents: agentForm.name ? 'auto' : 'none' }}>Next</button></div>;
+                case 2: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(1)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(3)} disabled={!isValidEmail(agentForm.email) || !agentForm.phone} style={{ flex: 1, opacity: (isValidEmail(agentForm.email) && agentForm.phone) ? 1 : 0.5, pointerEvents: (isValidEmail(agentForm.email) && agentForm.phone) ? 'auto' : 'none' }}>Next</button></div>;
+                case 3: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(4)} style={{ flex: 1 }}>Submit Request</button></div>;
+                case 4: return <div className={styles.floatingBar}><button className="geometric-btn" onClick={() => router.push('/portal')} style={{ flex: 1 }}>Back to Dashboard</button></div>;
+            }
+        }
+        if (bookingMode === 'self') {
+            switch (step) {
+                case 1:
+                    const showFlightResults = !isSearchingFlights && hasSearchedFlights && flightResults.length > 0;
+                    return (
+                        <div className={styles.floatingBar}>
+                            {showFlightResults ? (
+                                <>
+                                    <button className={styles.backBtn} onClick={() => { setFlightResults([]); setHasSearchedFlights(false); setSelectedFlight(null); }}><ArrowLeft size={18} /> Back</button>
+                                    <button className="geometric-btn" onClick={() => setStep(2)} disabled={!selectedFlight}
+                                        style={{ flex: 1, opacity: selectedFlight ? 1 : 0.5, pointerEvents: selectedFlight ? 'auto' : 'none' }}>
+                                        {selectedFlight ? `Continue · ${formatPrice(selectedFlight.price, selectedFlight.currency)}` : 'Select a flight to continue'}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
+                                    <button className="geometric-btn" onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}
+                                        style={{ flex: 1, opacity: canSearchFlights && !isSearchingFlights ? 1 : 0.5, pointerEvents: canSearchFlights && !isSearchingFlights ? 'auto' : 'none' }}>
+                                        {isSearchingFlights ? <><Loader2 size={20} className={styles.spinner} /> Searching Flights...</> : 'Search Flights'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    );
+                case 2:
+                    if (wantsHotel === null) {
+                        return (
+                            <div className={styles.floatingBar}>
+                                <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(1)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
+                            </div>
+                        );
+                    }
+                    const showHotelResults = !isSearchingHotels && hasSearchedHotels && hotelResults.length > 0;
+                    return (
+                        <div className={styles.floatingBar}>
+                            {showHotelResults ? (
+                                <>
+                                    <button className={styles.backBtn} onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setSelectedHotel(null); setHotelPage(1); }}><ArrowLeft size={18} /> Back</button>
+                                    <button className="geometric-btn" onClick={() => setStep(3)} style={{ flex: 1 }}>
+                                        {selectedHotel ? `Continue · ${formatPrice(selectedHotel.price, selectedHotel.currency)}` : 'Skip Hotels'}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className={styles.backBtn} onClick={() => { setWantsHotel(null); setHasSearchedHotels(false); }}><ArrowLeft size={18} /> Back</button>
+                                    <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout || isSearchingHotels}
+                                        style={{ flex: 1, opacity: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 'auto' : 'none' }}>
+                                        {isSearchingHotels ? <><Loader2 size={20} className={styles.spinner} /> Searching Hotels...</> : 'Search Hotels'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    );
+                case 3:
+                    return (
+                        <div className={styles.floatingBar}>
+                            <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
+                            <button className="geometric-btn" onClick={() => setStep(4)} disabled={!allTravelersValid}
+                                style={{ flex: 1, opacity: allTravelersValid ? 1 : 0.5, pointerEvents: allTravelersValid ? 'auto' : 'none' }}>
+                                Review Booking
+                            </button>
+                        </div>
+                    );
+                case 4:
+                    return (
+                        <div className={styles.floatingBar}>
+                            <button className={styles.backBtn} onClick={() => setStep(3)}><ArrowLeft size={18} /> Back</button>
+                            <button className="geometric-btn" onClick={confirmBooking} disabled={isBooking}
+                                style={{ flex: 1, opacity: isBooking ? 0.7 : 1 }}>
+                                {isBooking ? <><Loader2 size={20} className={styles.spinner} /> Processing Booking...</> : 'Confirm Booking'}
+                            </button>
+                        </div>
+                    );
+                case 5:
+                    return (
+                        <div className={styles.floatingBar}>
+                            <button className="geometric-btn" onClick={() => router.push('/portal')} style={{ flex: 1 }}>Go to Dashboard</button>
+                        </div>
+                    );
+            }
+        }
+        return null;
     };
 
     return (
@@ -1597,6 +1630,7 @@ function BookingInner() {
             <div className={styles.bookingContent}>
                 {renderStep()}
             </div>
+            {renderFloatingBar()}
         </main>
     );
 }

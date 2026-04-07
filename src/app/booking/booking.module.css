@@ -52,7 +52,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 20px 40px 140px;
+    padding: 20px 40px 40px;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
@@ -605,10 +605,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .floatingBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -621,6 +617,7 @@
     border-top: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
     z-index: 100;
+    flex-shrink: 0;
 }
 
 .paginationBar {
@@ -1308,7 +1305,7 @@
 
 @media (max-width: 768px) {
     .header { padding: 24px 20px; }
-    .bookingContent { padding: 24px 20px 140px 20px; align-items: flex-start; }
+    .bookingContent { padding: 24px 20px 40px 20px; align-items: flex-start; }
     .stepContainer { padding: 0; }
     .question { font-size: 1.8rem; margin-bottom: 24px; overflow-wrap: break-word; }
 

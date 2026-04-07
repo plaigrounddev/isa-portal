@@ -857,7 +857,6 @@ export default function Portal() {
             setRawHotelData(data);
             const parsed = parseLiteApiResponse(data);
             setHotelResults(parsed);
-            if (parsed.length === 0) setHotelError('No hotels found. Try a different city or dates.');
         } catch (err) {
             setHotelError(err instanceof Error ? err.message : 'Hotel search failed.');
         } finally {
@@ -1339,7 +1338,7 @@ export default function Portal() {
 
                         {/* Error (API failure) */}
                         {hotelError && !isSearchingHotels && (
-                            <div className={styles.htEmptyState}>
+                            <div className={styles.emptyStateCard}>
                                 <MapPin size={40} strokeWidth={1} />
                                 <p style={{ color: 'var(--isa-red)' }}>{hotelError}</p>
                             </div>
@@ -1347,7 +1346,7 @@ export default function Portal() {
 
                         {/* Empty (successful search, zero results) */}
                         {hasSearchedHotels && !isSearchingHotels && !hotelError && hotelResults.length === 0 && (
-                            <div className={styles.htEmptyState}>
+                            <div className={styles.emptyStateCard}>
                                 <MapPin size={40} strokeWidth={1} />
                                 <h3>No hotels found{hotelCity ? ` in ${hotelCity}` : ''}</h3>
                                 <p>Try a different destination, adjust your dates, or expand your search.</p>
@@ -1603,40 +1602,40 @@ export default function Portal() {
                             const q = searchQuery.toLowerCase().trim();
                             const filtered = q ? travelers.filter(t => `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) || getRoleLabel(t.role).toLowerCase().includes(q) || t.email.toLowerCase().includes(q)) : travelers;
                             return (
-                            <div className={`${styles.card} ${styles.cardFull}`}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{q ? `${filtered.length} of ${travelers.length}` : travelers.length} Traveler{(q ? filtered.length : travelers.length) !== 1 ? 's' : ''}{q ? ` matching "${searchQuery}"` : ''}</h3>
-                                </div>
-                                {filtered.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
-                                        <Search size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-                                        <p style={{ fontSize: '0.9rem' }}>No travelers match &ldquo;{searchQuery}&rdquo;</p>
+                                <div className={`${styles.card} ${styles.cardFull}`}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>{q ? `${filtered.length} of ${travelers.length}` : travelers.length} Traveler{(q ? filtered.length : travelers.length) !== 1 ? 's' : ''}{q ? ` matching "${searchQuery}"` : ''}</h3>
                                     </div>
-                                ) : (
-                                <div className={styles.tList}>
-                                    {filtered.map(t => (
-                                        <div key={t.id} className={styles.tCard}>
-                                            <div className={styles.tCardLeft}>
-                                                <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
-                                                    {getInitials(t.firstName, t.lastName)}
-                                                </div>
-                                                <div className={styles.tCardInfo}>
-                                                    <div className={styles.tCardName}>{t.firstName} {t.lastName}</div>
-                                                    <div className={styles.tCardMeta}>
-                                                        <span className={styles.tCardRole} style={{ color: ROLE_COLORS[t.role] || '#999' }}>{getRoleLabel(t.role)}</span>
-                                                        {t.email && <span className={styles.tCardEmail}>{t.email}</span>}
+                                    {filtered.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+                                            <Search size={32} strokeWidth={1} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                                            <p style={{ fontSize: '0.9rem' }}>No travelers match &ldquo;{searchQuery}&rdquo;</p>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.tList}>
+                                            {filtered.map(t => (
+                                                <div key={t.id} className={styles.tCard}>
+                                                    <div className={styles.tCardLeft}>
+                                                        <div className={styles.tCardAvatar} style={{ background: `${ROLE_COLORS[t.role] || '#999'}15`, color: ROLE_COLORS[t.role] || '#999' }}>
+                                                            {getInitials(t.firstName, t.lastName)}
+                                                        </div>
+                                                        <div className={styles.tCardInfo}>
+                                                            <div className={styles.tCardName}>{t.firstName} {t.lastName}</div>
+                                                            <div className={styles.tCardMeta}>
+                                                                <span className={styles.tCardRole} style={{ color: ROLE_COLORS[t.role] || '#999' }}>{getRoleLabel(t.role)}</span>
+                                                                {t.email && <span className={styles.tCardEmail}>{t.email}</span>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.tCardActions}>
+                                                        <button className={styles.tEditBtn} onClick={() => startEdit(t)}>Edit</button>
+                                                        <button className={styles.tDeleteBtn} onClick={() => handleDeleteTraveler(t.id)}>Remove</button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className={styles.tCardActions}>
-                                                <button className={styles.tEditBtn} onClick={() => startEdit(t)}>Edit</button>
-                                                <button className={styles.tDeleteBtn} onClick={() => handleDeleteTraveler(t.id)}>Remove</button>
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                                )}
-                            </div>
                             );
                         })()}
                     </div>

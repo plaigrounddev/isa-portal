@@ -2112,34 +2112,7 @@
     }
 }
 
-/* ── Hotel Empty State ────────────────────────────────────────────────────── */
-
-.htEmptyState {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 64px 32px;
-    color: #ccc;
-}
-
-.htEmptyState h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--isa-black);
-    margin: 16px 0 8px;
-    font-family: var(--font-sans);
-    text-transform: none;
-    letter-spacing: 0;
-}
-
-.htEmptyState p {
-    font-size: 0.9rem;
-    color: #999;
-    max-width: 360px;
-    line-height: 1.5;
-}
+/* ── Hotel Empty State (uses shared .emptyStateCard) ─────────────────── */
 
 /* ── Hotel Results ────────────────────────────────────────────────────────── */
 
@@ -2260,7 +2233,15 @@
 }
 
 .htTagGreen {
-    composes: htTag;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(39, 174, 96, 0.06);
+    color: #27ae60;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
 .htCardPrice {

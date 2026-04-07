@@ -857,7 +857,6 @@ export default function Portal() {
             setRawHotelData(data);
             const parsed = parseLiteApiResponse(data);
             setHotelResults(parsed);
-            if (parsed.length === 0) setHotelError('No hotels found. Try a different city or dates.');
         } catch (err) {
             setHotelError(err instanceof Error ? err.message : 'Hotel search failed.');
         } finally {
@@ -1339,7 +1338,7 @@ export default function Portal() {
 
                         {/* Error (API failure) */}
                         {hotelError && !isSearchingHotels && (
-                            <div className={styles.htEmptyState}>
+                            <div className={styles.emptyStateCard}>
                                 <MapPin size={40} strokeWidth={1} />
                                 <p style={{ color: 'var(--isa-red)' }}>{hotelError}</p>
                             </div>
@@ -1347,7 +1346,7 @@ export default function Portal() {
 
                         {/* Empty (successful search, zero results) */}
                         {hasSearchedHotels && !isSearchingHotels && !hotelError && hotelResults.length === 0 && (
-                            <div className={styles.htEmptyState}>
+                            <div className={styles.emptyStateCard}>
                                 <MapPin size={40} strokeWidth={1} />
                                 <h3>No hotels found{hotelCity ? ` in ${hotelCity}` : ''}</h3>
                                 <p>Try a different destination, adjust your dates, or expand your search.</p>
@@ -1723,6 +1722,7 @@ export default function Portal() {
                 <button className={`${styles.mobileNavItem} ${activeTab === 'flights' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('flights')}><Plane size={20} /><span>Flights</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'hotels' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('hotels')}><Hotel size={20} /><span>Hotels</span></button>
                 <button className={`${styles.mobileNavItem} ${activeTab === 'travelers' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('travelers')}><Users size={20} /><span>Travelers</span></button>
+                <button className={`${styles.mobileNavItem} ${activeTab === 'invoices' ? styles.mobileNavActive : ''}`} onClick={() => setActiveTab('invoices')}><FileText size={20} /><span>Invoices</span></button>
                 <button className={styles.mobileNavItem} onClick={handleSignOut}><LogOut size={20} /><span>Sign Out</span></button>
             </nav>
 

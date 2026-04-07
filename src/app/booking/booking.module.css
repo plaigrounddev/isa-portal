@@ -1,5 +1,5 @@
 .bookingLayout {
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -52,7 +52,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 20px 40px 120px;
+    padding: 20px 40px 140px;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
@@ -614,6 +614,7 @@
     justify-content: space-between;
     gap: 16px;
     padding: 16px max(40px, calc(50vw - 550px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -1307,7 +1308,7 @@
 
 @media (max-width: 768px) {
     .header { padding: 24px 20px; }
-    .bookingContent { padding: 24px 20px 100px 20px; align-items: flex-start; }
+    .bookingContent { padding: 24px 20px 140px 20px; align-items: flex-start; }
     .stepContainer { padding: 0; }
     .question { font-size: 1.8rem; margin-bottom: 24px; overflow-wrap: break-word; }
 
@@ -1356,7 +1357,7 @@
     .hotelImageWrapper { height: 140px; }
 
     /* Floating bar mobile */
-    .floatingBar { padding: 12px 20px; }
+    .floatingBar { padding: 12px 20px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
     .paginationBar { gap: 8px; }
     .pageBtn { padding: 8px 14px; font-size: 0.8rem; }
 

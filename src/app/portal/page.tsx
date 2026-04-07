@@ -28,6 +28,8 @@ import {
     ShieldCheck,
     Circle,
     Check,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import { HotelDetailModal } from '@/components/hotel/HotelDetailModal';
@@ -568,6 +570,46 @@ function getRoleLabel(role: string) {
     return TRAVELER_ROLES.find(r => r.value === role)?.label || role;
 }
 
+const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (page: number) => void }) => {
+    if (totalPages <= 1) return null;
+
+    const getVisiblePages = () => {
+        const pages: (number | 'ellipsis')[] = [];
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (currentPage > 3) pages.push('ellipsis');
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+            for (let i = start; i <= end; i++) pages.push(i);
+            if (currentPage < totalPages - 2) pages.push('ellipsis');
+            pages.push(totalPages);
+        }
+        return pages;
+    };
+
+    return (
+        <div className={styles.pagination}>
+            <button className={styles.paginationBtn} disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)}>
+                <ChevronLeft size={18} />
+            </button>
+            {getVisiblePages().map((p, i) =>
+                p === 'ellipsis' ? (
+                    <span key={`e${i}`} className={styles.paginationEllipsis}>...</span>
+                ) : (
+                    <button key={p} className={`${styles.paginationBtn} ${p === currentPage ? styles.paginationActive : ''}`} onClick={() => onPageChange(p)}>
+                        {p}
+                    </button>
+                )
+            )}
+            <button className={styles.paginationBtn} disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)}>
+                <ChevronRight size={18} />
+            </button>
+        </div>
+    );
+};
+
 const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
     const [step, setStep] = useState(0);
     const steps = type === 'flights'
@@ -752,6 +794,11 @@ export default function Portal() {
     const [rawHotelData, setRawHotelData] = useState<any>(null);
     const [detailHotel, setDetailHotel] = useState<ParsedHotel | null>(null);
 
+    const HOTELS_PER_PAGE = 6;
+    const FLIGHTS_PER_PAGE = 5;
+    const [hotelPage, setHotelPage] = useState(1);
+    const [flightPage, setFlightPage] = useState(1);
+
     const todayStr = (() => {
         const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     })();
@@ -805,6 +852,7 @@ export default function Portal() {
 
             const parsed = parseFareNexusResponse(data);
             setFlightResults(parsed);
+            setFlightPage(1);
             if (parsed.length === 0) setFlightError('No flights found. Try different dates or airports.');
         } catch (err) {
             setFlightError(err instanceof Error ? err.message : 'Flight search failed.');
@@ -857,6 +905,7 @@ export default function Portal() {
             setRawHotelData(data);
             const parsed = parseLiteApiResponse(data);
             setHotelResults(parsed);
+            setHotelPage(1);
         } catch (err) {
             setHotelError(err instanceof Error ? err.message : 'Hotel search failed.');
         } finally {
@@ -1145,17 +1194,17 @@ export default function Portal() {
                                 <div className={styles.ftFilterBar} style={{ marginTop: 0, borderTop: 'none', paddingTop: 0, paddingBottom: 24, marginBottom: 24, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                                     <span className={styles.ftFilterLabel}>Select departure from {flightOrigin}</span>
                                     <div className={styles.ftFilters}>
-                                        <select className={styles.ftFilterSelect} value={filterStops} onChange={(e) => setFilterStops(e.target.value as 'any' | 'nonstop' | 'one_stop')}>
+                                        <select className={styles.ftFilterSelect} value={filterStops} onChange={(e) => { setFilterStops(e.target.value as 'any' | 'nonstop' | 'one_stop'); setFlightPage(1); }}>
                                             <option value="any">Any stops</option>
                                             <option value="nonstop">Nonstop only</option>
                                             <option value="one_stop">1 stop or fewer</option>
                                         </select>
-                                        <select className={styles.ftFilterSelect} value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)}>
+                                        <select className={styles.ftFilterSelect} value={filterAirline} onChange={(e) => { setFilterAirline(e.target.value); setFlightPage(1); }}>
                                             <option value="">All airlines</option>
                                             {uniqueAirlines.map(([code, name]) => (<option key={code} value={code}>{name}</option>))}
                                         </select>
                                         {(filterStops !== 'any' || filterAirline) && (
-                                            <button className={styles.ftFilterClear} onClick={() => { setFilterStops('any'); setFilterAirline(''); }}>Clear filters</button>
+                                            <button className={styles.ftFilterClear} onClick={() => { setFilterStops('any'); setFilterAirline(''); setFlightPage(1); }}>Clear filters</button>
                                         )}
                                     </div>
                                 </div>
@@ -1174,37 +1223,44 @@ export default function Portal() {
                                     <div style={{ textAlign: 'center', padding: '40px 20px', color: '#888' }}>
                                         <p>No flights match your filters. Try adjusting or clearing filters.</p>
                                     </div>
-                                ) : (
-                                    <div className={styles.ftResultsList}>
-                                        {filteredFlights.map(flight => (
-                                            <div key={flight.id} className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`} onClick={() => setDetailFlight(flight)}>
-                                                <div className={styles.ftCardAirline}>
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={40} height={40} className={styles.ftAirlineLogo} />}
-                                                    <span className={styles.ftAirlineName}>{flight.carrierName}</span>
-                                                </div>
-                                                <div className={styles.ftCardLegs}>
-                                                    <div className={styles.ftLeg}>
-                                                        <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.departAirport}</span></div>
-                                                        <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.outbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.outbound.stops)}</span></div>
-                                                        <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.arriveAirport}</span></div>
-                                                    </div>
-                                                    {flight.inbound && (
-                                                        <div className={styles.ftLeg} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                                                            <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.departAirport}</span></div>
-                                                            <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.inbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.inbound.stops)}</span></div>
-                                                            <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.arriveAirport}</span></div>
+                                ) : (() => {
+                                    const totalFlightPages = Math.ceil(filteredFlights.length / FLIGHTS_PER_PAGE);
+                                    const paginatedFlights = filteredFlights.slice((flightPage - 1) * FLIGHTS_PER_PAGE, flightPage * FLIGHTS_PER_PAGE);
+                                    return (
+                                        <>
+                                            <div className={styles.ftResultsList}>
+                                                {paginatedFlights.map(flight => (
+                                                    <div key={flight.id} className={`${styles.ftCard} ${selectedFlight?.id === flight.id ? styles.ftCardSelected : ''}`} onClick={() => setDetailFlight(flight)}>
+                                                        <div className={styles.ftCardAirline}>
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            {flight.carrierLogo && <img src={flight.carrierLogo} alt={flight.carrierName} width={40} height={40} className={styles.ftAirlineLogo} />}
+                                                            <span className={styles.ftAirlineName}>{flight.carrierName}</span>
                                                         </div>
-                                                    )}
-                                                </div>
-                                                <div className={styles.ftCardPrice}>
-                                                    <span className={styles.ftPriceVal}>{formatPrice(flight.price, flight.currency)}</span>
-                                                    <span className={styles.ftPricePer}>per person</span>
-                                                </div>
+                                                        <div className={styles.ftCardLegs}>
+                                                            <div className={styles.ftLeg}>
+                                                                <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.departAirport}</span></div>
+                                                                <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.outbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.outbound.stops)}</span></div>
+                                                                <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.outbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.outbound.arriveAirport}</span></div>
+                                                            </div>
+                                                            {flight.inbound && (
+                                                                <div className={styles.ftLeg} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                                                                    <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.departTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.departAirport}</span></div>
+                                                                    <div className={styles.ftRoute}><span className={styles.ftDuration}>{flight.inbound.duration}</span><div className={styles.ftLine}><div className={styles.ftDot} /><div className={styles.ftDash} /><div className={styles.ftDot} /></div><span className={styles.ftStops}>{formatStops(flight.inbound.stops)}</span></div>
+                                                                    <div className={styles.ftTime}><span className={styles.ftTimeVal}>{flight.inbound.arriveTime || '--:--'}</span><span className={styles.ftAirport}>{flight.inbound.arriveAirport}</span></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className={styles.ftCardPrice}>
+                                                            <span className={styles.ftPriceVal}>{formatPrice(flight.price, flight.currency)}</span>
+                                                            <span className={styles.ftPricePer}>per person</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            <Pagination currentPage={flightPage} totalPages={totalFlightPages} onPageChange={(p) => { setFlightPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+                                        </>
+                                    );
+                                })()}
                             </div>
                         )}
 
@@ -1354,58 +1410,63 @@ export default function Portal() {
                         )}
 
                         {/* Results */}
-                        {!isSearchingHotels && hotelResults.length > 0 && (
-                            <>
-                                <div className={styles.htResultsBar}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                        <button onClick={() => { setHotelResults([]); setHasSearchedHotels(false); }} className={styles.backToSearchBtn}>
-                                            <ArrowLeft size={18} /> Back to Search
-                                        </button>
-                                        <span className={styles.htResultsCount}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''}</span>
+                        {!isSearchingHotels && hotelResults.length > 0 && (() => {
+                            const totalHotelPages = Math.ceil(hotelResults.length / HOTELS_PER_PAGE);
+                            const paginatedHotels = hotelResults.slice((hotelPage - 1) * HOTELS_PER_PAGE, hotelPage * HOTELS_PER_PAGE);
+                            return (
+                                <>
+                                    <div className={styles.htResultsBar}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                            <button onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setHotelPage(1); }} className={styles.backToSearchBtn}>
+                                                <ArrowLeft size={18} /> Back to Search
+                                            </button>
+                                            <span className={styles.htResultsCount}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''}</span>
+                                        </div>
+                                        <span className={styles.htResultsCity}>in {hotelCity}</span>
                                     </div>
-                                    <span className={styles.htResultsCity}>in {hotelCity}</span>
-                                </div>
-                                <div className={styles.htGrid}>
-                                    {hotelResults.map(hotel => {
-                                        const nights = (hotelCheckin && hotelCheckout) ? calcNights(hotelCheckin, hotelCheckout) : 1;
-                                        const perNight = hotel.price > 0 ? Math.round(hotel.price / nights) : 0;
-                                        return (
-                                            <div key={hotel.hotelId} className={styles.htCard} onClick={() => setDetailHotel(hotel)}>
-                                                {hotel.image ? (
-                                                    <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
-                                                ) : (
-                                                    <div className={styles.htCardImagePlaceholder}><MapPin size={20} /></div>
-                                                )}
-                                                <div className={styles.htCardBody}>
-                                                    <h4 className={styles.htCardName}>{hotel.name}</h4>
-                                                    <div className={styles.htCardMeta}>
-                                                        {hotel.stars > 0 && <span className={styles.htStars}><Star size={12} fill="currentColor" /> {hotel.stars}</span>}
-                                                        {hotel.address && <span className={styles.htCardAddr}>{hotel.address}</span>}
-                                                    </div>
-                                                    {(hotel.hasBreakfast || hotel.hasRefundable) && (
-                                                        <div className={styles.htTags}>
-                                                            {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={11} /> Breakfast</span>}
-                                                            {hotel.hasRefundable && <span className={styles.htTagGreen}><ShieldCheck size={11} /> Free cancellation</span>}
-                                                        </div>
+                                    <div className={styles.htGrid}>
+                                        {paginatedHotels.map(hotel => {
+                                            const nights = (hotelCheckin && hotelCheckout) ? calcNights(hotelCheckin, hotelCheckout) : 1;
+                                            const perNight = hotel.price > 0 ? Math.round(hotel.price / nights) : 0;
+                                            return (
+                                                <div key={hotel.hotelId} className={styles.htCard} onClick={() => setDetailHotel(hotel)}>
+                                                    {hotel.image ? (
+                                                        <div className={styles.htCardImage} style={{ backgroundImage: `url(${hotel.image})` }} />
+                                                    ) : (
+                                                        <div className={styles.htCardImagePlaceholder}><MapPin size={20} /></div>
                                                     )}
-                                                    <div className={styles.htCardPrice}>
-                                                        {hotel.price > 0 ? (
-                                                            <>
-                                                                <span className={styles.htPrice}>{formatPrice(perNight, hotel.currency)}</span>
-                                                                <span className={styles.htPricePer}>/ night</span>
-                                                                {nights > 1 && <span className={styles.htTotalLabel}>{formatPrice(hotel.price, hotel.currency)} total</span>}
-                                                            </>
-                                                        ) : (
-                                                            <span className={styles.htNoPrice}>Prices on request</span>
+                                                    <div className={styles.htCardBody}>
+                                                        <h4 className={styles.htCardName}>{hotel.name}</h4>
+                                                        <div className={styles.htCardMeta}>
+                                                            {hotel.stars > 0 && <span className={styles.htStars}><Star size={12} fill="currentColor" /> {hotel.stars}</span>}
+                                                            {hotel.address && <span className={styles.htCardAddr}>{hotel.address}</span>}
+                                                        </div>
+                                                        {(hotel.hasBreakfast || hotel.hasRefundable) && (
+                                                            <div className={styles.htTags}>
+                                                                {hotel.hasBreakfast && <span className={styles.htTag}><Coffee size={11} /> Breakfast</span>}
+                                                                {hotel.hasRefundable && <span className={styles.htTagGreen}><ShieldCheck size={11} /> Free cancellation</span>}
+                                                            </div>
                                                         )}
+                                                        <div className={styles.htCardPrice}>
+                                                            {hotel.price > 0 ? (
+                                                                <>
+                                                                    <span className={styles.htPrice}>{formatPrice(perNight, hotel.currency)}</span>
+                                                                    <span className={styles.htPricePer}>/ night</span>
+                                                                    {nights > 1 && <span className={styles.htTotalLabel}>{formatPrice(hotel.price, hotel.currency)} total</span>}
+                                                                </>
+                                                            ) : (
+                                                                <span className={styles.htNoPrice}>Prices on request</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </>
-                        )}
+                                            );
+                                        })}
+                                    </div>
+                                    <Pagination currentPage={hotelPage} totalPages={totalHotelPages} onPageChange={(p) => { setHotelPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+                                </>
+                            );
+                        })()}
 
                         {/* Pre-search */}
                         {!hasSearchedHotels && !isSearchingHotels && (

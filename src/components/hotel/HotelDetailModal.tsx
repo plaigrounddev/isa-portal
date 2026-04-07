@@ -43,6 +43,8 @@ interface Props {
 
 export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, hotelAddress, checkin, checkout, rates, onClose, onSelectRate, enableCheckout = false, onBookingComplete }: Props) {
     const [activeTab, setActiveTab] = useState<'rooms' | 'photos' | 'amenities' | 'reviews'>('rooms');
+    const ROOMS_PER_PAGE = 4;
+    const [roomPage, setRoomPage] = useState(1);
 
     // Checkout state
     const [selectedRate, setSelectedRate] = useState<RoomRate | null>(null);
@@ -209,33 +211,54 @@ export function HotelDetailModal({ hotelId, hotelName, hotelImage, hotelStars, h
                     )}
 
                     {/* ROOMS TAB */}
-                    {activeTab === 'rooms' && (
-                        <div className={styles.roomsList}>
-                            {rates.length === 0 ? (
-                                <div className={styles.emptyState}><Bed size={32} /><p>No rooms available for these dates.</p></div>
-                            ) : rates.map((rate, i) => (
-                                <div key={`${rate.offerId}-${rate.rateId || i}`} className={styles.roomCard}>
-                                    <div className={styles.roomInfo}>
-                                        <h4 className={styles.roomName}>{rate.roomName}</h4>
-                                        <div className={styles.roomMeta}>
-                                            {rate.maxOccupancy > 0 && <span><Users size={13} /> Up to {rate.maxOccupancy}</span>}
-                                            <span>{rate.boardName || rate.boardType || 'Room Only'}</span>
-                                        </div>
-                                        <div className={styles.roomTags}>
-                                            {rate.boardType === 'BB' || rate.boardType === 'BI' ? <span className={styles.roomTag}><Coffee size={12} /> Breakfast</span> : null}
-                                            {rate.refundable && <span className={styles.roomTagGreen}><ShieldCheck size={12} /> Free cancellation</span>}
-                                        </div>
-                                        {rate.remarks && <div className={styles.roomRemarks} dangerouslySetInnerHTML={{ __html: rate.remarks.substring(0, 200) }} />}
-                                    </div>
-                                    <div className={styles.roomPrice}>
-                                        <span className={styles.priceValue}>${rate.price.toFixed(0)}</span>
-                                        <span className={styles.priceLabel}>{nights > 1 ? `${nights} nights` : 'per night'}</span>
-                                        <button className={styles.selectBtn} onClick={() => handleSelectRoom(rate)}>Select Room</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {activeTab === 'rooms' && (() => {
+                        const totalRoomPages = Math.ceil(rates.length / ROOMS_PER_PAGE);
+                        const paginatedRates = rates.slice((roomPage - 1) * ROOMS_PER_PAGE, roomPage * ROOMS_PER_PAGE);
+                        return (
+                            <div className={styles.roomsList}>
+                                {rates.length === 0 ? (
+                                    <div className={styles.emptyState}><Bed size={32} /><p>No rooms available for these dates.</p></div>
+                                ) : (
+                                    <>
+                                        {paginatedRates.map((rate, i) => (
+                                            <div key={`${rate.offerId}-${rate.rateId || i}`} className={styles.roomCard}>
+                                                <div className={styles.roomInfo}>
+                                                    <h4 className={styles.roomName}>{rate.roomName}</h4>
+                                                    <div className={styles.roomMeta}>
+                                                        {rate.maxOccupancy > 0 && <span><Users size={13} /> Up to {rate.maxOccupancy}</span>}
+                                                        <span>{rate.boardName || rate.boardType || 'Room Only'}</span>
+                                                    </div>
+                                                    <div className={styles.roomTags}>
+                                                        {rate.boardType === 'BB' || rate.boardType === 'BI' ? <span className={styles.roomTag}><Coffee size={12} /> Breakfast</span> : null}
+                                                        {rate.refundable && <span className={styles.roomTagGreen}><ShieldCheck size={12} /> Free cancellation</span>}
+                                                    </div>
+                                                    {rate.remarks && <div className={styles.roomRemarks} dangerouslySetInnerHTML={{ __html: rate.remarks.substring(0, 200) }} />}
+                                                </div>
+                                                <div className={styles.roomPrice}>
+                                                    <span className={styles.priceValue}>${rate.price.toFixed(0)}</span>
+                                                    <span className={styles.priceLabel}>{nights > 1 ? `${nights} nights` : 'per night'}</span>
+                                                    <button className={styles.selectBtn} onClick={() => handleSelectRoom(rate)}>Select Room</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {totalRoomPages > 1 && (
+                                            <div className={styles.roomPagination}>
+                                                <button className={styles.roomPageBtn} disabled={roomPage === 1} onClick={() => setRoomPage(roomPage - 1)}>
+                                                    <ChevronLeft size={16} /> Previous
+                                                </button>
+                                                <span className={styles.roomPageInfo}>
+                                                    {roomPage} of {totalRoomPages} <span className={styles.roomPageCount}>({rates.length} rooms)</span>
+                                                </span>
+                                                <button className={styles.roomPageBtn} disabled={roomPage === totalRoomPages} onClick={() => setRoomPage(roomPage + 1)}>
+                                                    Next <ChevronRight size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                     {/* PHOTOS TAB */}
                     {activeTab === 'photos' && !isLoading && (

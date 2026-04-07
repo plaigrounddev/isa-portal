@@ -349,6 +349,54 @@
 .errorIcon { width: 64px; height: 64px; border-radius: 50%; background: rgba(230,57,70,0.1); color: var(--isa-red); display: flex; align-items: center; justify-content: center; }
 .bookingRef { font-size: 0.8rem; color: #bbb; margin-top: 4px; font-family: monospace; }
 
+/* ── Room Pagination ────────────────────────────────────────────────────── */
+
+.roomPagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 4px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.roomPageBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: white;
+    color: var(--isa-black);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.roomPageBtn:hover:not(:disabled) {
+    border-color: var(--isa-red);
+    color: var(--isa-red);
+}
+
+.roomPageBtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.roomPageInfo {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--isa-black);
+}
+
+.roomPageCount {
+    font-weight: 400;
+    color: #999;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .overlay { padding: 0; align-items: flex-end; }
@@ -362,4 +410,6 @@
     .roomPrice { flex-direction: row; align-items: center; gap: 12px; min-width: 0; }
     .priceLabel { margin-bottom: 0; }
     .roomTypesGrid { grid-template-columns: 1fr; }
+    .roomPageBtn { padding: 6px 12px; font-size: 0.78rem; }
+    .roomPageInfo { font-size: 0.8rem; }
 }

@@ -2376,6 +2376,71 @@
     font-weight: 500;
 }
 
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.paginationBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    background: white;
+    color: var(--isa-black);
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.paginationBtn:hover:not(:disabled) {
+    border-color: var(--isa-red);
+    color: var(--isa-red);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.1);
+}
+
+.paginationBtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.paginationActive {
+    background: var(--isa-red);
+    color: white;
+    border-color: var(--isa-red);
+}
+
+.paginationActive:hover:not(:disabled) {
+    background: var(--isa-black);
+    border-color: var(--isa-black);
+    color: white;
+}
+
+.paginationEllipsis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 40px;
+    color: #bbb;
+    font-size: 0.88rem;
+    letter-spacing: 2px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    FLIGHTS & HOTELS MOBILE ADJUSTMENTS
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -2846,6 +2911,18 @@
 
     .htCardAddr {
         max-width: 100%;
+    }
+
+    .pagination {
+        gap: 4px;
+        margin-top: 24px;
+    }
+
+    .paginationBtn {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 8px;
+        font-size: 0.82rem;
     }
 
     .welcomeBanner {

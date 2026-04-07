@@ -49,9 +49,9 @@
 .bookingContent {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 40px 40px 80px;
+    padding: 20px 40px 100px;
 }
 
 .stepContainer {
@@ -417,34 +417,6 @@
     font-weight: 500;
 }
 
-.showMoreBtn {
-    width: 100%;
-    margin-top: 16px;
-    padding: 16px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--isa-charcoal);
-    background: #f6f7f9;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    cursor: pointer;
-    transition: all 0.25s ease;
-    font-family: var(--font-sans);
-    letter-spacing: 0.5px;
-}
-
-.showMoreBtn:hover {
-    background: var(--isa-black);
-    color: white;
-    border-color: var(--isa-black);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.showMoreBtn:focus-visible {
-    outline: 2px solid var(--isa-red);
-    outline-offset: 2px;
-}
-
 .resultsList {
     display: flex;
     flex-direction: column;
@@ -607,12 +579,93 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   FLOATING BAR & PAGINATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.floatingBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+    z-index: 100;
+}
+
+.paginationBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px 0 8px;
+    margin-top: 8px;
+}
+
+.pageBtn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    color: var(--isa-charcoal);
+    background: #f6f7f9;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+    background: var(--isa-black);
+    color: white;
+    border-color: var(--isa-black);
+}
+
+.pageBtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.pageInfo {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #888;
+}
+
+.searchAgainBtn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--isa-red);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    padding: 4px 8px;
+    transition: opacity 0.2s;
+}
+
+.searchAgainBtn:hover {
+    opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    HOTEL RESULTS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .hotelGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.hotelGridWide {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
 
@@ -1283,7 +1336,13 @@
 
     /* Hotel cards mobile */
     .hotelGrid { grid-template-columns: 1fr; }
+    .hotelGridWide { grid-template-columns: 1fr 1fr; }
     .hotelImageWrapper { height: 140px; }
+
+    /* Floating bar mobile */
+    .floatingBar { padding: 12px 20px; }
+    .paginationBar { gap: 8px; }
+    .pageBtn { padding: 8px 14px; font-size: 0.8rem; }
 
     /* Traveler details mobile */
     .dobRow { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }

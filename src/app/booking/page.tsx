@@ -553,8 +553,10 @@ function BookingInner() {
     const [isSearchingFlights, setIsSearchingFlights] = useState(false);
     const [flightError, setFlightError] = useState('');
     const [hasSearchedFlights, setHasSearchedFlights] = useState(false);
-    const [visibleFlightCount, setVisibleFlightCount] = useState(20);
-    const FLIGHTS_PER_PAGE = 20;
+    const FLIGHTS_PER_PAGE = 8;
+    const HOTELS_PER_PAGE = 8;
+    const [flightPage, setFlightPage] = useState(1);
+    const [hotelPage, setHotelPage] = useState(1);
 
     const [wantsHotel, setWantsHotel] = useState<boolean | null>(null);
     const [hotelCity, setHotelCity] = useState('');
@@ -719,7 +721,7 @@ function BookingInner() {
         setFlightResults([]);
         setSelectedFlight(null);
         setHasSearchedFlights(true);
-        setVisibleFlightCount(FLIGHTS_PER_PAGE);
+        setFlightPage(1);
 
         try {
             const passengers: { type: 'ADT' | 'CNN' | 'INF'; quantity: number }[] = [{ type: 'ADT', quantity: adults }];
@@ -748,10 +750,7 @@ function BookingInner() {
     };
 
     const searchHotels = async () => {
-        if (!hotelCheckin || !hotelCheckout || hotelCheckout <= hotelCheckin) {
-            setHotelError('Please select valid check-in and check-out dates.');
-            return;
-        }
+        if (!hotelCheckin || !hotelCheckout || hotelCheckout <= hotelCheckin) return;
 
         setIsSearchingHotels(true);
         setHotelError('');
@@ -1028,109 +1027,115 @@ function BookingInner() {
         // ==================== SELF-SERVICE FLOW ====================
         switch (step) {
             // ── Step 1: Flight Search & Results ───────────────────────────
-            case 1:
+            case 1: {
+                const showFlightResults = !isSearchingFlights && hasSearchedFlights && flightResults.length > 0;
+                const totalFlightPages = Math.ceil(flightResults.length / FLIGHTS_PER_PAGE);
+                const paginatedFlights = flightResults.slice((flightPage - 1) * FLIGHTS_PER_PAGE, flightPage * FLIGHTS_PER_PAGE);
+
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
                         <div className={styles.stepLabel}>STEP 01/{String(SELF_TOTAL).padStart(2, '0')}</div>
-                        <h2 className={styles.question}>Search Flights</h2>
-                        <p className={styles.questionSub}>Find the best available flights for your trip.</p>
 
-                        {/* Trip Type Toggle */}
-                        <div className={styles.tripTypeRow}>
-                            <button className={`${styles.tripTypeBtn} ${tripType === 'RT' ? styles.tripTypeBtnActive : ''}`} onClick={() => setTripType('RT')}>Round Trip</button>
-                            <button className={`${styles.tripTypeBtn} ${tripType === 'OW' ? styles.tripTypeBtnActive : ''}`} onClick={() => setTripType('OW')}>One Way</button>
-                        </div>
+                        {/* Search Form — hidden once results are in */}
+                        {!showFlightResults && (
+                            <>
+                                <h2 className={styles.question}>Search Flights</h2>
+                                <p className={styles.questionSub}>Find the best available flights for your trip.</p>
 
-                        {/* Airport Inputs */}
-                        <div className={styles.searchFormGrid}>
-                            <div>
-                                <label className={styles.dateLabel}>From</label>
-                                <AirportSearchInput value={origin} onChange={(code) => setOrigin(code)} placeholder="City or airport code" />
-                            </div>
-                            <div>
-                                <label className={styles.dateLabel}>To</label>
-                                <AirportSearchInput value={destination} onChange={(code) => setDestination(code)} placeholder="City or airport code" />
-                            </div>
-                        </div>
-
-                        {origin && destination && origin === destination && (
-                            <div className={styles.searchError} style={{ marginTop: '-8px' }}>Origin and destination cannot be the same airport.</div>
-                        )}
-
-                        {/* Dates */}
-                        <div className={styles.searchFormGrid}>
-                            <div>
-                                <label className={styles.dateLabel}>Departure</label>
-                                <CustomDatePicker value={departDate} onChange={setDepartDate} placeholder="mm/dd/yyyy" minDate={todayStr} />
-                            </div>
-                            {tripType === 'RT' && (
-                                <div>
-                                    <label className={styles.dateLabel}>Return</label>
-                                    <CustomDatePicker value={returnDate} onChange={setReturnDate} placeholder="mm/dd/yyyy" minDate={departDate} />
+                                <div className={styles.tripTypeRow}>
+                                    <button className={`${styles.tripTypeBtn} ${tripType === 'RT' ? styles.tripTypeBtnActive : ''}`} onClick={() => setTripType('RT')}>Round Trip</button>
+                                    <button className={`${styles.tripTypeBtn} ${tripType === 'OW' ? styles.tripTypeBtnActive : ''}`} onClick={() => setTripType('OW')}>One Way</button>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Class & Passengers */}
-                        <div className={styles.searchFormGrid}>
-                            <div>
-                                <label className={styles.dateLabel}>Cabin Class</label>
-                                <CustomSelect value={travelClass} onChange={setTravelClass} options={CLASS_OPTIONS} placeholder="Select class" />
-                            </div>
-                            <div>
-                                <label className={styles.dateLabel}>Travelers</label>
-                                <div className={styles.paxRow}>
-                                    <div className={styles.paxControl}>
-                                        <span className={styles.paxLabel}>Adults</span>
-                                        <div className={styles.paxBtns}>
-                                            <button className={styles.paxBtn} onClick={() => setAdults(Math.max(1, adults - 1))}>-</button>
-                                            <span className={styles.paxCount}>{adults}</span>
-                                            <button className={styles.paxBtn} onClick={() => setAdults(Math.min(MAX_PASSENGERS - children, adults + 1))} disabled={adults + children >= MAX_PASSENGERS}>+</button>
-                                        </div>
+                                <div className={styles.searchFormGrid}>
+                                    <div>
+                                        <label className={styles.dateLabel}>From</label>
+                                        <AirportSearchInput value={origin} onChange={(code) => setOrigin(code)} placeholder="City or airport code" />
                                     </div>
-                                    <div className={styles.paxControl}>
-                                        <span className={styles.paxLabel}>Children</span>
-                                        <div className={styles.paxBtns}>
-                                            <button className={styles.paxBtn} onClick={() => setChildren(Math.max(0, children - 1))}>-</button>
-                                            <span className={styles.paxCount}>{children}</span>
-                                            <button className={styles.paxBtn} onClick={() => setChildren(Math.min(MAX_PASSENGERS - adults, children + 1))} disabled={adults + children >= MAX_PASSENGERS}>+</button>
-                                        </div>
+                                    <div>
+                                        <label className={styles.dateLabel}>To</label>
+                                        <AirportSearchInput value={destination} onChange={(code) => setDestination(code)} placeholder="City or airport code" />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Search Button */}
-                        <button className="geometric-btn" onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}
-                            style={{ width: '100%', marginBottom: '32px', opacity: canSearchFlights && !isSearchingFlights ? 1 : 0.5, pointerEvents: canSearchFlights && !isSearchingFlights ? 'auto' : 'none' }}>
-                            {isSearchingFlights ? <><Loader2 size={20} className={styles.spinner} /> Searching Flights...</> : 'Search Flights'}
-                        </button>
+                                {origin && destination && origin === destination && (
+                                    <div className={styles.searchError} style={{ marginTop: '-8px' }}>Origin and destination cannot be the same airport.</div>
+                                )}
 
-                        {/* Error */}
-                        {flightError && <div className={styles.searchError}>{flightError}</div>}
+                                <div className={styles.searchFormGrid}>
+                                    <div>
+                                        <label className={styles.dateLabel}>Departure</label>
+                                        <CustomDatePicker value={departDate} onChange={setDepartDate} placeholder="mm/dd/yyyy" minDate={todayStr} />
+                                    </div>
+                                    {tripType === 'RT' && (
+                                        <div>
+                                            <label className={styles.dateLabel}>Return</label>
+                                            <CustomDatePicker value={returnDate} onChange={setReturnDate} placeholder="mm/dd/yyyy" minDate={departDate} />
+                                        </div>
+                                    )}
+                                </div>
 
-                        {/* Loading */}
-                        {isSearchingFlights && (
-                            <div className={styles.loadingContainer}>
-                                <Loader2 size={40} className={styles.spinner} />
-                                <p className={styles.loadingText}>Searching across airlines...</p>
-                            </div>
+                                <div className={styles.searchFormGrid}>
+                                    <div>
+                                        <label className={styles.dateLabel}>Cabin Class</label>
+                                        <CustomSelect value={travelClass} onChange={setTravelClass} options={CLASS_OPTIONS} placeholder="Select class" />
+                                    </div>
+                                    <div>
+                                        <label className={styles.dateLabel}>Travelers</label>
+                                        <div className={styles.paxRow}>
+                                            <div className={styles.paxControl}>
+                                                <span className={styles.paxLabel}>Adults</span>
+                                                <div className={styles.paxBtns}>
+                                                    <button className={styles.paxBtn} onClick={() => setAdults(Math.max(1, adults - 1))}>-</button>
+                                                    <span className={styles.paxCount}>{adults}</span>
+                                                    <button className={styles.paxBtn} onClick={() => setAdults(Math.min(MAX_PASSENGERS - children, adults + 1))} disabled={adults + children >= MAX_PASSENGERS}>+</button>
+                                                </div>
+                                            </div>
+                                            <div className={styles.paxControl}>
+                                                <span className={styles.paxLabel}>Children</span>
+                                                <div className={styles.paxBtns}>
+                                                    <button className={styles.paxBtn} onClick={() => setChildren(Math.max(0, children - 1))}>-</button>
+                                                    <span className={styles.paxCount}>{children}</span>
+                                                    <button className={styles.paxBtn} onClick={() => setChildren(Math.min(MAX_PASSENGERS - adults, children + 1))} disabled={adults + children >= MAX_PASSENGERS}>+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button className="geometric-btn" onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}
+                                    style={{ width: '100%', marginBottom: '32px', opacity: canSearchFlights && !isSearchingFlights ? 1 : 0.5, pointerEvents: canSearchFlights && !isSearchingFlights ? 'auto' : 'none' }}>
+                                    {isSearchingFlights ? <><Loader2 size={20} className={styles.spinner} /> Searching Flights...</> : 'Search Flights'}
+                                </button>
+
+                                {flightError && <div className={styles.searchError}>{flightError}</div>}
+
+                                {isSearchingFlights && (
+                                    <div className={styles.loadingContainer}>
+                                        <Loader2 size={40} className={styles.spinner} />
+                                        <p className={styles.loadingText}>Searching across airlines...</p>
+                                    </div>
+                                )}
+
+                                <div className={styles.actions}>
+                                    <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
+                                </div>
+                            </>
                         )}
 
-                        {/* Results */}
-                        {!isSearchingFlights && hasSearchedFlights && flightResults.length > 0 && (() => {
-                            const visibleFlights = flightResults.slice(0, visibleFlightCount);
-                            const hasMore = flightResults.length > visibleFlightCount;
-                            const remaining = flightResults.length - visibleFlightCount;
-
-                            return (
+                        {/* Results View — replaces the form */}
+                        {showFlightResults && (
+                            <>
+                                <h2 className={styles.question}>Select a Flight</h2>
                                 <div className={styles.resultsSection}>
                                     <div className={styles.resultsHeader}>
                                         <h3 className={styles.resultsTitle}>{flightResults.length} flight{flightResults.length !== 1 ? 's' : ''} found</h3>
-                                        <span className={styles.resultsShowing}>Showing {visibleFlights.length} of {flightResults.length}</span>
+                                        <button className={styles.searchAgainBtn} onClick={() => { setFlightResults([]); setHasSearchedFlights(false); setSelectedFlight(null); }}>
+                                            New Search
+                                        </button>
                                     </div>
                                     <div className={styles.resultsList}>
-                                        {visibleFlights.map(flight => (
+                                        {paginatedFlights.map(flight => (
                                             <div key={flight.id} className={`${styles.flightCard} ${selectedFlight?.id === flight.id ? styles.flightCardSelected : ''}`} onClick={() => setSelectedFlight(flight)}>
                                                 <div className={styles.flightAirline}>
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1182,41 +1187,35 @@ function BookingInner() {
                                         ))}
                                     </div>
 
-                                    {hasMore && (
-                                        <button className={styles.showMoreBtn} onClick={() => setVisibleFlightCount(prev => prev + FLIGHTS_PER_PAGE)}>
-                                            Show {Math.min(remaining, FLIGHTS_PER_PAGE)} More Flight{Math.min(remaining, FLIGHTS_PER_PAGE) !== 1 ? 's' : ''}
-                                        </button>
+                                    {totalFlightPages > 1 && (
+                                        <div className={styles.paginationBar}>
+                                            <button className={styles.pageBtn} disabled={flightPage === 1} onClick={() => setFlightPage(flightPage - 1)}>← Previous</button>
+                                            <span className={styles.pageInfo}>Page {flightPage} of {totalFlightPages}</span>
+                                            <button className={styles.pageBtn} disabled={flightPage === totalFlightPages} onClick={() => setFlightPage(flightPage + 1)}>Next →</button>
+                                        </div>
                                     )}
                                 </div>
-                            );
-                        })()}
+                            </>
+                        )}
 
-                        {/* Continue */}
-                        {selectedFlight && (
-                            <div className={styles.actions} style={{ marginTop: '24px' }}>
-                                <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
-                                <button className="geometric-btn" onClick={() => setStep(2)} style={{ flex: 1 }}>
-                                    Continue with {selectedFlight.carrierName}
+                        {/* Floating bottom bar for results view */}
+                        {showFlightResults && (
+                            <div className={styles.floatingBar}>
+                                <button className={styles.backBtn} onClick={() => { setFlightResults([]); setHasSearchedFlights(false); setSelectedFlight(null); }}><ArrowLeft size={18} /> Back</button>
+                                <button className="geometric-btn" onClick={() => setStep(2)} disabled={!selectedFlight}
+                                    style={{ flex: 1, opacity: selectedFlight ? 1 : 0.5, pointerEvents: selectedFlight ? 'auto' : 'none' }}>
+                                    {selectedFlight ? `Continue · ${formatPrice(selectedFlight.price, selectedFlight.currency)}` : 'Select a flight to continue'}
                                 </button>
-                            </div>
-                        )}
-                        {!selectedFlight && hasSearchedFlights && !isSearchingFlights && (
-                            <div className={styles.actions}>
-                                <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
-                            </div>
-                        )}
-                        {!hasSearchedFlights && (
-                            <div className={styles.actions}>
-                                <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
                             </div>
                         )}
                     </div>
                 );
+            }
 
             // ── Step 2: Hotel Search & Results ────────────────────────────
             case 2:
                 return (
-                    <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
+                    <div className={styles.stepContainer} style={{ maxWidth: '1100px' }}>
                         {prefilledBookKey ? (
                             <div className={styles.stepLabel}>CHECKOUT</div>
                         ) : (
@@ -1258,90 +1257,116 @@ function BookingInner() {
                             </>
                         )}
 
-                        {wantsHotel === true && (
-                            <>
-                                <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
-                                    <div>
-                                        <label className={styles.dateLabel}>City</label>
-                                        <input type="text" className={styles.inputField} value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} placeholder="City name" style={{ marginBottom: 0 }} />
-                                    </div>
-                                    <div>
-                                        <label className={styles.dateLabel}>Country Code</label>
-                                        <input type="text" className={styles.inputField} value={hotelCountry} onChange={(e) => setHotelCountry(e.target.value)} placeholder="US" maxLength={2} style={{ marginBottom: 0 }} />
-                                    </div>
-                                </div>
-                                <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
-                                    <div>
-                                        <label className={styles.dateLabel}>Check-in</label>
-                                        <CustomDatePicker value={hotelCheckin} onChange={setHotelCheckin} placeholder="mm/dd/yyyy" minDate={todayStr} />
-                                    </div>
-                                    <div>
-                                        <label className={styles.dateLabel}>Check-out</label>
-                                        <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="mm/dd/yyyy" minDate={hotelCheckin || todayStr} />
-                                    </div>
-                                </div>
+                        {wantsHotel === true && (() => {
+                            const showHotelResults = !isSearchingHotels && hasSearchedHotels && hotelResults.length > 0;
+                            const totalHotelPages = Math.ceil(hotelResults.length / HOTELS_PER_PAGE);
+                            const paginatedHotels = hotelResults.slice((hotelPage - 1) * HOTELS_PER_PAGE, hotelPage * HOTELS_PER_PAGE);
 
-                                {!isSearchingHotels && (
-                                    <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout}
-                                        style={{ width: '100%', marginBottom: '24px', opacity: (hotelCity && hotelCheckin && hotelCheckout) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout) ? 'auto' : 'none' }}>
-                                        {hasSearchedHotels ? 'Search Again' : 'Search Hotels'}
-                                    </button>
-                                )}
-
-                                {hotelError && <div className={styles.searchError}>{hotelError}</div>}
-
-                                {isSearchingHotels && (
-                                    <div className={styles.loadingContainer}>
-                                        <Loader2 size={40} className={styles.spinner} />
-                                        <p className={styles.loadingText}>Searching hotels in {hotelCity}...</p>
-                                    </div>
-                                )}
-
-                                {!isSearchingHotels && hasSearchedHotels && hotelResults.length > 0 && (
-                                    <div className={styles.resultsSection}>
-                                        <div className={styles.resultsHeader}>
-                                            <h3 className={styles.resultsTitle}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''} found</h3>
-                                        </div>
-                                        <div className={styles.hotelGrid}>
-                                            {hotelResults.map(hotel => (
-                                                <div key={hotel.offerId} className={`${styles.hotelCard} ${selectedHotel?.offerId === hotel.offerId ? styles.hotelCardSelected : ''}`} onClick={() => setSelectedHotel(hotel)}>
-                                                    {hotel.image && (
-                                                        <div className={styles.hotelImageWrapper}>
-                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img src={hotel.image} alt={hotel.name} className={styles.hotelImage} />
-                                                        </div>
-                                                    )}
-                                                    <div className={styles.hotelInfo}>
-                                                        <div className={styles.hotelStars}>{'★'.repeat(hotel.stars)}{'☆'.repeat(Math.max(0, 5 - hotel.stars))}</div>
-                                                        <div className={styles.hotelName}>{hotel.name}</div>
-                                                        {hotel.address && <div className={styles.hotelAddress}>{hotel.address}</div>}
-                                                        <div className={styles.hotelRoom}>{hotel.roomName}</div>
-                                                        <div className={styles.hotelBoard}>{formatBoardType(hotel.boardType)}</div>
-                                                        <div className={styles.hotelPriceRow}>
-                                                            <span className={styles.hotelPrice}>{formatPrice(hotel.price, hotel.currency)}</span>
-                                                            <span className={styles.hotelPriceLabel}>total stay</span>
-                                                        </div>
-                                                    </div>
-                                                    {selectedHotel?.offerId === hotel.offerId && (
-                                                        <div className={styles.hotelCheck}><CheckIcon color="white" /></div>
-                                                    )}
+                            return (
+                                <>
+                                    {/* Search form — hidden once results are in */}
+                                    {!showHotelResults && (
+                                        <>
+                                            <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
+                                                <div>
+                                                    <label className={styles.dateLabel}>City</label>
+                                                    <input type="text" className={styles.inputField} value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} placeholder="City name" style={{ marginBottom: 0 }} />
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                                <div>
+                                                    <label className={styles.dateLabel}>Country Code</label>
+                                                    <input type="text" className={styles.inputField} value={hotelCountry} onChange={(e) => setHotelCountry(e.target.value)} placeholder="US" maxLength={2} style={{ marginBottom: 0 }} />
+                                                </div>
+                                            </div>
+                                            <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
+                                                <div>
+                                                    <label className={styles.dateLabel}>Check-in</label>
+                                                    <CustomDatePicker value={hotelCheckin} onChange={setHotelCheckin} placeholder="mm/dd/yyyy" minDate={todayStr} />
+                                                </div>
+                                                <div>
+                                                    <label className={styles.dateLabel}>Check-out</label>
+                                                    <CustomDatePicker value={hotelCheckout} onChange={setHotelCheckout} placeholder="mm/dd/yyyy" minDate={hotelCheckin || todayStr} />
+                                                </div>
+                                            </div>
 
-                                {/* Actions */}
-                                <div className={styles.actions} style={{ marginTop: '24px' }}>
-                                    <button className={styles.backBtn} onClick={() => { setWantsHotel(null); setHasSearchedHotels(false); }}><ArrowLeft size={18} /> Back</button>
-                                    {(selectedHotel || (hasSearchedHotels && !isSearchingHotels)) && (
-                                        <button className="geometric-btn" onClick={() => setStep(3)} style={{ flex: 1 }}>
-                                            {selectedHotel ? `Continue with ${selectedHotel.name.substring(0, 30)}` : 'Skip Hotels'}
-                                        </button>
+                                            {!isSearchingHotels && (
+                                                <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout}
+                                                    style={{ width: '100%', marginBottom: '24px', opacity: (hotelCity && hotelCheckin && hotelCheckout) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout) ? 'auto' : 'none' }}>
+                                                    Search Hotels
+                                                </button>
+                                            )}
+
+                                            {hotelError && <div className={styles.searchError}>{hotelError}</div>}
+
+                                            {isSearchingHotels && (
+                                                <div className={styles.loadingContainer}>
+                                                    <Loader2 size={40} className={styles.spinner} />
+                                                    <p className={styles.loadingText}>Searching hotels in {hotelCity}...</p>
+                                                </div>
+                                            )}
+
+                                            <div className={styles.actions}>
+                                                <button className={styles.backBtn} onClick={() => { setWantsHotel(null); setHasSearchedHotels(false); }}><ArrowLeft size={18} /> Back</button>
+                                            </div>
+                                        </>
                                     )}
-                                </div>
-                            </>
-                        )}
+
+                                    {/* Results View — replaces the form */}
+                                    {showHotelResults && (
+                                        <>
+                                            <h2 className={styles.question} style={{ fontSize: '1.8rem' }}>Select a Hotel</h2>
+                                            <div className={styles.resultsSection}>
+                                                <div className={styles.resultsHeader}>
+                                                    <h3 className={styles.resultsTitle}>{hotelResults.length} hotel{hotelResults.length !== 1 ? 's' : ''} in {hotelCity}</h3>
+                                                    <button className={styles.searchAgainBtn} onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setSelectedHotel(null); setHotelPage(1); }}>
+                                                        New Search
+                                                    </button>
+                                                </div>
+                                                <div className={styles.hotelGridWide}>
+                                                    {paginatedHotels.map(hotel => (
+                                                        <div key={hotel.offerId} className={`${styles.hotelCard} ${selectedHotel?.offerId === hotel.offerId ? styles.hotelCardSelected : ''}`} onClick={() => setSelectedHotel(hotel)}>
+                                                            {hotel.image && (
+                                                                <div className={styles.hotelImageWrapper}>
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img src={hotel.image} alt={hotel.name} className={styles.hotelImage} />
+                                                                </div>
+                                                            )}
+                                                            <div className={styles.hotelInfo}>
+                                                                <div className={styles.hotelStars}>{'★'.repeat(hotel.stars)}{'☆'.repeat(Math.max(0, 5 - hotel.stars))}</div>
+                                                                <div className={styles.hotelName}>{hotel.name}</div>
+                                                                {hotel.address && <div className={styles.hotelAddress}>{hotel.address}</div>}
+                                                                <div className={styles.hotelPriceRow}>
+                                                                    <span className={styles.hotelPrice}>{formatPrice(hotel.price, hotel.currency)}</span>
+                                                                    <span className={styles.hotelPriceLabel}>total</span>
+                                                                </div>
+                                                            </div>
+                                                            {selectedHotel?.offerId === hotel.offerId && (
+                                                                <div className={styles.hotelCheck}><CheckIcon color="white" /></div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {totalHotelPages > 1 && (
+                                                    <div className={styles.paginationBar}>
+                                                        <button className={styles.pageBtn} disabled={hotelPage === 1} onClick={() => setHotelPage(hotelPage - 1)}>← Previous</button>
+                                                        <span className={styles.pageInfo}>Page {hotelPage} of {totalHotelPages}</span>
+                                                        <button className={styles.pageBtn} disabled={hotelPage === totalHotelPages} onClick={() => setHotelPage(hotelPage + 1)}>Next →</button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Floating bottom bar */}
+                                            <div className={styles.floatingBar}>
+                                                <button className={styles.backBtn} onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setSelectedHotel(null); }}><ArrowLeft size={18} /> Back</button>
+                                                <button className="geometric-btn" onClick={() => setStep(3)} style={{ flex: 1 }}>
+                                                    {selectedHotel ? `Continue · ${formatPrice(selectedHotel.price, selectedHotel.currency)}` : 'Skip Hotels'}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 );
 

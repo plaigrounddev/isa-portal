@@ -1017,11 +1017,11 @@ function BookingInner() {
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
                         <div className={styles.stepLabel}>STEP 01/{String(SELF_TOTAL).padStart(2, '0')}</div>
+                        {!showFlightResults && <h2 className={styles.question}>Search Flights</h2>}
 
                         {/* Search Form — hidden once results are in */}
                         {!showFlightResults && (
                             <>
-                                <h2 className={styles.question}>Search Flights</h2>
                                 <p className={styles.questionSub}>Find the best available flights for your trip.</p>
 
                                 <div className={styles.tripTypeRow}>
@@ -1099,7 +1099,7 @@ function BookingInner() {
                         {/* Results View — replaces the form */}
                         {showFlightResults && (
                             <>
-                                <h2 className={styles.question}>Select a Flight</h2>
+                                <h2 className={styles.question} style={{ fontSize: '1.8rem' }}>Select a Flight</h2>
                                 <div className={styles.resultsSection}>
                                     <div className={styles.resultsHeader}>
                                         <h3 className={styles.resultsTitle}>{flightResults.length} flight{flightResults.length !== 1 ? 's' : ''} found</h3>
@@ -1177,6 +1177,7 @@ function BookingInner() {
 
             // ── Step 2: Hotel Search & Results ────────────────────────────
             case 2:
+                const showHotelResults = wantsHotel === true && !isSearchingHotels && hasSearchedHotels && hotelResults.length > 0;
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '1100px' }}>
                         {prefilledBookKey ? (
@@ -1184,7 +1185,7 @@ function BookingInner() {
                         ) : (
                             <div className={styles.stepLabel}>STEP 02/{String(SELF_TOTAL).padStart(2, '0')}</div>
                         )}
-                        <h2 className={styles.question}>Need a Hotel?</h2>
+                        {!showHotelResults && <h2 className={styles.question}>Need a Hotel?</h2>}
 
                         {/* Flight summary when coming from the portal */}
                         {selectedFlight && prefilledBookKey && wantsHotel === null && (
@@ -1218,7 +1219,6 @@ function BookingInner() {
                         )}
 
                         {wantsHotel === true && (() => {
-                            const showHotelResults = !isSearchingHotels && hasSearchedHotels && hotelResults.length > 0;
                             const totalHotelPages = Math.ceil(hotelResults.length / HOTELS_PER_PAGE);
                             const paginatedHotels = hotelResults.slice((hotelPage - 1) * HOTELS_PER_PAGE, hotelPage * HOTELS_PER_PAGE);
 

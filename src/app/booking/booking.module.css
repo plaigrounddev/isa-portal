@@ -269,7 +269,7 @@
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-    z-index: 200;
+    z-index: 1001;
     padding: 8px;
 }
 
@@ -1135,7 +1135,7 @@
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 0;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-    z-index: 100;
+    z-index: 1001;
     padding: 8px;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -1165,7 +1165,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 99;
+    z-index: 1000;
 }
 
 .dropdownIcon {
@@ -1196,7 +1196,7 @@
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 0;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
-    z-index: 100;
+    z-index: 1001;
     padding: 20px;
 }
 
@@ -1320,7 +1320,28 @@
 
     .questionSub { font-size: 0.95rem; margin-top: -16px; margin-bottom: 32px; }
 
-    .calendarPopover { width: 100%; min-width: 0; left: 0; right: 0; padding: 16px; }
+    .calendarPopover,
+    .customSelectList,
+    .airportDropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 40px);
+        max-width: 360px;
+        max-height: 80vh;
+        z-index: 1000;
+        border-radius: 12px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+    }
+
+    .selectOverlay {
+        z-index: 999;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
     .calendarGrid { gap: 2px 4px; }
     .calendarDay, .calendarDayEmpty { font-size: 0.8rem; }
 

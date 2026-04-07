@@ -1261,7 +1261,7 @@
 .dpOverlay {
     position: fixed;
     inset: 0;
-    z-index: 90;
+    z-index: 1000;
 }
 
 .dpTrigger {
@@ -1290,7 +1290,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    z-index: 100;
+    z-index: 1001;
     background: white;
     border-radius: 16px;
     padding: 20px;
@@ -1416,7 +1416,7 @@
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 1001;
     background: white;
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
@@ -3158,6 +3158,27 @@
 
 
 @media (max-width: 768px) {
+    .calPopover,
+    .airportDropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 40px);
+        max-width: 360px;
+        max-height: 80vh;
+        z-index: 1000;
+        border-radius: 12px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+    }
+
+    .dpOverlay {
+        z-index: 999;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
     .ftFilterBar {
         flex-direction: column;
         align-items: stretch;

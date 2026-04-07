@@ -502,6 +502,7 @@ const AirportSearchInput = ({ value, onChange, placeholder }: { value: string; o
 
     return (
         <div className={styles.airportWrapper} ref={wrapperRef}>
+            {isOpen && results.length > 0 && <div className={styles.dpOverlay} onClick={() => setIsOpen(false)} />}
             <Plane size={16} strokeWidth={1.5} className={styles.airportIcon} />
             <input
                 type="text" className={styles.airportInput} placeholder={placeholder}

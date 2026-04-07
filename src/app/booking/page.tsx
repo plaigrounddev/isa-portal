@@ -1170,9 +1170,6 @@ function BookingInner() {
                             </>
                         )}
 
-                        {/* Floating bottom bar for results view */}
-                        {showFlightResults && (
-                        )}
                     </div>
                 );
             }

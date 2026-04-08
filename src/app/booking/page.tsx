@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plane, Compass, User, Hotel, Loader2, ArrowLeft } from 'lucide-react';
+import { Plane, Compass, User, Hotel, Loader2, ArrowLeft, Check, Circle } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import styles from './booking.module.css';
 

@@ -1029,10 +1029,10 @@ export default function Portal() {
                                         Your portal is set up and ready to go. Start by adding travelers to your profile, then book flights and hotels for upcoming events.
                                     </p>
                                     <div className={styles.welcomeBannerActions}>
-                                        <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.9rem' }} onClick={() => { setActiveTab('travelers'); setIsAddingTraveler(true); }}>
+                                        <button className="geometric-btn" style={{ padding: '14px 28px', fontSize: '0.9rem', display: 'inline-flex' }} onClick={() => { setActiveTab('travelers'); setIsAddingTraveler(true); }}>
                                             Add Your First Traveler
                                         </button>
-                                        <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.9rem' }} onClick={() => setShowWelcome(false)}>
+                                        <button className="geometric-btn geometric-btn-secondary" style={{ padding: '14px 28px', fontSize: '0.9rem', display: 'inline-flex' }} onClick={() => setShowWelcome(false)}>
                                             Explore Portal
                                         </button>
                                     </div>
@@ -1656,7 +1656,7 @@ export default function Portal() {
                                 <p style={{ color: '#888', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>
                                     Add athletes, parents, coaches, and team members to quickly include them in your bookings.
                                 </p>
-                                <button className="geometric-btn" style={{ padding: '16px 32px', fontSize: '0.9rem' }} onClick={() => { resetTravelerForm(); setIsAddingTraveler(true); }}>
+                                <button className="geometric-btn" style={{ padding: '16px 32px', fontSize: '0.9rem', margin: '0 auto', display: 'inline-flex' }} onClick={() => { resetTravelerForm(); setIsAddingTraveler(true); }}>
                                     <UserPlus size={18} /> Add Your First Traveler
                                 </button>
                             </div>

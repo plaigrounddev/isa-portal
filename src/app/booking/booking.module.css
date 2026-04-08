@@ -357,6 +357,110 @@
    LOADING & ERROR
    ═══════════════════════════════════════════════════════════════════════════ */
 
+.loadingSequence {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px 20px;
+    width: 100%;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.loadingSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 48px;
+    max-width: 320px;
+    width: 100%;
+}
+
+.loadingStep {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 1.05rem;
+    color: #999;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.4;
+    transform: translateX(-10px);
+}
+
+.loadingStep.activeStep {
+    color: var(--isa-black);
+    opacity: 1;
+    transform: translateX(0);
+    font-weight: 500;
+}
+
+.loadingStep.completedStep {
+    color: var(--isa-black);
+    opacity: 0.7;
+    transform: translateX(0);
+}
+
+.stepIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.pendingCircle {
+    color: #ddd;
+}
+
+.completedCheck {
+    color: var(--isa-red);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.htSkeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.htSkeleton {
+    border-radius: 14px;
+    overflow: hidden;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.htSkeletonImg {
+    height: 160px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #ecedf0 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.htSkeletonBody {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.htSkeletonLine {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #ecedf0 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 .loadingContainer {
     display: flex;
     flex-direction: column;
@@ -443,6 +547,13 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.ftResultsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
 }
 
 .flightCard {
@@ -1368,11 +1479,13 @@
     .flightAirline { margin-bottom: 4px; }
     .flightPrice { flex-direction: row; align-items: baseline; gap: 8px; }
     .flightPriceValue { font-size: 1.1rem; }
+    .ftResultsList { width: 100%; }
 
     /* Hotel cards mobile */
     .hotelGrid { grid-template-columns: 1fr; }
     .hotelGridWide { grid-template-columns: 1fr 1fr; }
     .hotelImageWrapper { height: 140px; }
+    .htSkeletonGrid { grid-template-columns: 1fr 1fr; }
 
     /* Floating bar mobile */
     .floatingBar { padding: 12px 20px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }

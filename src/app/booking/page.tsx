@@ -528,6 +528,72 @@ const AirportSearchInput = ({ value, onChange, placeholder }: { value: string; o
     );
 };
 
+const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
+    const [step, setStep] = useState(0);
+    const steps = type === 'flights'
+        ? ['Connecting to airlines...', 'Searching best routes...', 'Finalizing results...']
+        : ['Connecting to partners...', 'Finding best rooms...', 'Finalizing results...'];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setStep(s => {
+                if (s >= steps.length - 1) {
+                    clearInterval(interval);
+                    return s;
+                }
+                return s + 1;
+            });
+        }, 1500);
+        return () => clearInterval(interval);
+    }, [steps.length]);
+
+    return (
+        <div className={styles.loadingSequence}>
+            <div className={styles.loadingSteps}>
+                {steps.map((s, i) => (
+                    <div key={i} className={`${styles.loadingStep} ${i === step ? styles.activeStep : i < step ? styles.completedStep : ''}`}>
+                        <div className={styles.stepIcon}>
+                            {i < step ? <Check size={20} className={styles.completedCheck} /> : i === step ? <Loader2 size={20} className={styles.spinner} /> : <Circle size={20} className={styles.pendingCircle} />}
+                        </div>
+                        <span>{s}</span>
+                    </div>
+                ))}
+            </div>
+
+            {type === 'hotels' ? (
+                <div className={styles.htSkeletonGrid} style={{ opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <div key={i} className={styles.htSkeleton}>
+                            <div className={styles.htSkeletonImg} />
+                            <div className={styles.htSkeletonBody}>
+                                <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className={styles.ftResultsList} style={{ width: '100%', opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className={styles.htSkeleton} style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                            <div className={styles.htSkeletonImg} style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '20%' }} />
+                            </div>
+                            <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                                <div className={styles.htSkeletonLine} style={{ width: '80%' }} />
+                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN BOOKING COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1087,12 +1153,7 @@ function BookingInner() {
 
                                 {flightError && <div className={styles.searchError}>{flightError}</div>}
 
-                                {isSearchingFlights && (
-                                    <div className={styles.loadingContainer}>
-                                        <Loader2 size={40} className={styles.spinner} />
-                                        <p className={styles.loadingText}>Searching across airlines...</p>
-                                    </div>
-                                )}
+                                {isSearchingFlights && <SearchLoadingSequence type="flights" />}
                             </>
                         )}
 
@@ -1250,12 +1311,7 @@ function BookingInner() {
 
                                             {hotelError && <div className={styles.searchError}>{hotelError}</div>}
 
-                                            {isSearchingHotels && (
-                                                <div className={styles.loadingContainer}>
-                                                    <Loader2 size={40} className={styles.spinner} />
-                                                    <p className={styles.loadingText}>Searching hotels in {hotelCity}...</p>
-                                                </div>
-                                            )}
+                                            {isSearchingHotels && <SearchLoadingSequence type="hotels" />}
                                         </>
                                     )}
 

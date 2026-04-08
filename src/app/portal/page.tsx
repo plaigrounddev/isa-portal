@@ -645,7 +645,7 @@ const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
 
             {type === 'hotels' ? (
                 <div className={styles.htSkeletonGrid} style={{ opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
-                    {[1, 2, 3, 4, 5, 6].map(i => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                         <div key={i} className={styles.htSkeleton}>
                             <div className={styles.htSkeletonImg} />
                             <div className={styles.htSkeletonBody}>
@@ -658,7 +658,7 @@ const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
                 </div>
             ) : (
                 <div className={styles.ftResultsList} style={{ width: '100%', opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
-                    {[1, 2, 3].map(i => (
+                    {[1, 2, 3, 4].map(i => (
                         <div key={i} className={styles.htSkeleton} style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
                             <div className={styles.htSkeletonImg} style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>

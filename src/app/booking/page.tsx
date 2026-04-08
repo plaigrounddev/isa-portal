@@ -1083,11 +1083,14 @@ function BookingInner() {
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
                         <div className={styles.stepLabel}>STEP 01/{String(SELF_TOTAL).padStart(2, '0')}</div>
-                        {!showFlightResults && <h2 className={styles.question}>Search Flights</h2>}
 
-                        {/* Search Form — hidden once results are in */}
-                        {!showFlightResults && (
+                        {/* Loading — dedicated view */}
+                        {isSearchingFlights && <SearchLoadingSequence type="flights" />}
+
+                        {/* Search Form — hidden when loading or results showing */}
+                        {!showFlightResults && !isSearchingFlights && (
                             <>
+                                <h2 className={styles.question}>Search Flights</h2>
                                 <p className={styles.questionSub}>Find the best available flights for your trip.</p>
 
                                 <div className={styles.tripTypeRow}>
@@ -1152,8 +1155,6 @@ function BookingInner() {
                                 </div>
 
                                 {flightError && <div className={styles.searchError}>{flightError}</div>}
-
-                                {isSearchingFlights && <SearchLoadingSequence type="flights" />}
                             </>
                         )}
 
@@ -1285,8 +1286,11 @@ function BookingInner() {
 
                             return (
                                 <>
-                                    {/* Search form — hidden once results are in */}
-                                    {!showHotelResults && (
+                                    {/* Loading — dedicated view */}
+                                    {isSearchingHotels && <SearchLoadingSequence type="hotels" />}
+
+                                    {/* Search form — hidden when loading or results showing */}
+                                    {!showHotelResults && !isSearchingHotels && (
                                         <>
                                             <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
                                                 <div>
@@ -1310,8 +1314,6 @@ function BookingInner() {
                                             </div>
 
                                             {hotelError && <div className={styles.searchError}>{hotelError}</div>}
-
-                                            {isSearchingHotels && <SearchLoadingSequence type="hotels" />}
                                         </>
                                     )}
 

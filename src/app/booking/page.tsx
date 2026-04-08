@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plane, Compass, User, Hotel, Loader2, ArrowLeft, Check, Circle } from 'lucide-react';
+import { Plane, Compass, User, Hotel, Loader2, ArrowLeft } from 'lucide-react';
 import { searchAirports, getAirportInfo, getAirlineLogo, getAirlineInfo, formatPrice, type AirportInfo } from '@/lib/airlines';
 import styles from './booking.module.css';
 
@@ -528,109 +528,6 @@ const AirportSearchInput = ({ value, onChange, placeholder }: { value: string; o
     );
 };
 
-const SearchLoadingSequence = ({ type }: { type: 'flights' | 'hotels' }) => {
-    const [step, setStep] = useState(0);
-    const steps = type === 'flights'
-        ? ['Connecting to airlines...', 'Searching best routes...', 'Finalizing results...']
-        : ['Connecting to partners...', 'Finding best rooms...', 'Finalizing results...'];
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setStep(s => {
-                if (s >= steps.length - 1) {
-                    clearInterval(interval);
-                    return s;
-                }
-                return s + 1;
-            });
-        }, 1500);
-        return () => clearInterval(interval);
-    }, [steps.length]);
-
-    return (
-        <div className={styles.loadingSequence}>
-            <div className={styles.loadingSteps}>
-                {steps.map((s, i) => (
-                    <div key={i} className={`${styles.loadingStep} ${i === step ? styles.activeStep : i < step ? styles.completedStep : ''}`}>
-                        <div className={styles.stepIcon}>
-                            {i < step ? <Check size={20} className={styles.completedCheck} /> : i === step ? <Loader2 size={20} className={styles.spinner} /> : <Circle size={20} className={styles.pendingCircle} />}
-                        </div>
-                        <span>{s}</span>
-                    </div>
-                ))}
-            </div>
-
-            {type === 'hotels' ? (
-                <div className={styles.htSkeletonGrid} style={{ opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                        <div key={i} className={styles.htSkeleton}>
-                            <div className={styles.htSkeletonImg} />
-                            <div className={styles.htSkeletonBody}>
-                                <div className={styles.htSkeletonLine} style={{ width: '70%' }} />
-                                <div className={styles.htSkeletonLine} style={{ width: '50%' }} />
-                                <div className={styles.htSkeletonLine} style={{ width: '30%' }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className={styles.ftResultsList} style={{ width: '100%', opacity: step > 0 ? 1 : 0.2, transition: 'opacity 0.8s ease' }}>
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className={styles.htSkeleton} style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
-                            <div className={styles.htSkeletonImg} style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
-                                <div className={styles.htSkeletonLine} style={{ width: '20%' }} />
-                            </div>
-                            <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-                                <div className={styles.htSkeletonLine} style={{ width: '80%' }} />
-                                <div className={styles.htSkeletonLine} style={{ width: '40%' }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const BookingLoadingSequence = () => {
-    const [step, setStep] = useState(0);
-    const steps = ['Securing your reservation...', 'Confirming with partners...', 'Finalizing itinerary...'];
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setStep(s => {
-                if (s >= steps.length - 1) {
-                    clearInterval(interval);
-                    return s;
-                }
-                return s + 1;
-            });
-        }, 2000);
-        return () => clearInterval(interval);
-    }, [steps.length]);
-
-    return (
-        <div className={styles.loadingSequence}>
-            <div className={styles.loadingSteps}>
-                {steps.map((s, i) => (
-                    <div key={i} className={`${styles.loadingStep} ${i === step ? styles.activeStep : i < step ? styles.completedStep : ''}`}>
-                        <div className={styles.stepIcon}>
-                            {i < step ? <Check size={20} className={styles.completedCheck} /> : i === step ? <Loader2 size={20} className={styles.spinner} /> : <Circle size={20} className={styles.pendingCircle} />}
-                        </div>
-                        <span>{s}</span>
-                    </div>
-                ))}
-            </div>
-            <div className={styles.loadingContainer}>
-                <Loader2 size={40} className={styles.spinner} style={{ color: 'var(--isa-red)', marginBottom: '16px' }} />
-                <p className={styles.loadingText}>Please do not close this window or press back.</p>
-            </div>
-        </div>
-    );
-};
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN BOOKING COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1114,17 +1011,16 @@ function BookingInner() {
             // ── Step 1: Flight Search & Results ───────────────────────────
             case 1: {
                 const showFlightResults = !isSearchingFlights && hasSearchedFlights && flightResults.length > 0;
-                const showFlightForm = !isSearchingFlights && (!hasSearchedFlights || flightResults.length === 0);
                 const totalFlightPages = Math.ceil(flightResults.length / FLIGHTS_PER_PAGE);
                 const paginatedFlights = flightResults.slice((flightPage - 1) * FLIGHTS_PER_PAGE, flightPage * FLIGHTS_PER_PAGE);
 
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
                         <div className={styles.stepLabel}>STEP 01/{String(SELF_TOTAL).padStart(2, '0')}</div>
-                        {showFlightForm && <h2 className={styles.question}>Search Flights</h2>}
+                        {!showFlightResults && <h2 className={styles.question}>Search Flights</h2>}
 
-                        {/* Search Form — hidden once results are in or searching */}
-                        {showFlightForm && (
+                        {/* Search Form — hidden once results are in */}
+                        {!showFlightResults && (
                             <>
                                 <p className={styles.questionSub}>Find the best available flights for your trip.</p>
 
@@ -1190,10 +1086,15 @@ function BookingInner() {
                                 </div>
 
                                 {flightError && <div className={styles.searchError}>{flightError}</div>}
+
+                                {isSearchingFlights && (
+                                    <div className={styles.loadingContainer}>
+                                        <Loader2 size={40} className={styles.spinner} />
+                                        <p className={styles.loadingText}>Searching across airlines...</p>
+                                    </div>
+                                )}
                             </>
                         )}
-
-                        {isSearchingFlights && <SearchLoadingSequence type="flights" />}
 
                         {/* Results View — replaces the form */}
                         {showFlightResults && (
@@ -1318,14 +1219,13 @@ function BookingInner() {
                         )}
 
                         {wantsHotel === true && (() => {
-                            const showHotelForm = !isSearchingHotels && (!hasSearchedHotels || hotelResults.length === 0);
                             const totalHotelPages = Math.ceil(hotelResults.length / HOTELS_PER_PAGE);
                             const paginatedHotels = hotelResults.slice((hotelPage - 1) * HOTELS_PER_PAGE, hotelPage * HOTELS_PER_PAGE);
 
                             return (
                                 <>
                                     {/* Search form — hidden once results are in */}
-                                    {showHotelForm && (
+                                    {!showHotelResults && (
                                         <>
                                             <div className={styles.searchFormGrid} style={{ marginBottom: '16px' }}>
                                                 <div>
@@ -1349,10 +1249,15 @@ function BookingInner() {
                                             </div>
 
                                             {hotelError && <div className={styles.searchError}>{hotelError}</div>}
+
+                                            {isSearchingHotels && (
+                                                <div className={styles.loadingContainer}>
+                                                    <Loader2 size={40} className={styles.spinner} />
+                                                    <p className={styles.loadingText}>Searching hotels in {hotelCity}...</p>
+                                                </div>
+                                            )}
                                         </>
                                     )}
-
-                                    {isSearchingHotels && <SearchLoadingSequence type="hotels" />}
 
                                     {/* Results View — replaces the form */}
                                     {showHotelResults && (
@@ -1503,7 +1408,6 @@ function BookingInner() {
 
             // ── Step 4: Review & Confirm ──────────────────────────────────
             case 4:
-                if (isBooking) return <BookingLoadingSequence />;
                 return (
                     <div className={styles.stepContainer} style={{ maxWidth: '900px' }}>
                         <div className={styles.stepLabel}>STEP 04/{String(SELF_TOTAL).padStart(2, '0')}</div>
@@ -1617,30 +1521,29 @@ function BookingInner() {
     const renderFloatingBar = () => {
         if (step === 0) {
             return (
-                <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                <div className={styles.floatingBar}>
                     <button className={styles.backBtn} onClick={() => router.push('/portal')}><ArrowLeft size={18} /> Back</button>
                     <button className="geometric-btn" onClick={() => setStep(1)} disabled={!bookingMode}
                         style={{ opacity: bookingMode ? 1 : 0.5, pointerEvents: bookingMode ? 'auto' : 'none' }}>
                         Continue
                     </button>
-                </div></div>
+                </div>
             );
         }
         if (bookingMode === 'agent') {
             switch (step) {
-                case 1: return <div className={styles.floatingBar}><div className={styles.floatingBarInner}><button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(2)} disabled={!agentForm.name} style={{ opacity: agentForm.name ? 1 : 0.5, pointerEvents: agentForm.name ? 'auto' : 'none' }}>Next</button></div></div>;
-                case 2: return <div className={styles.floatingBar}><div className={styles.floatingBarInner}><button className={styles.backBtn} onClick={() => setStep(1)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(3)} disabled={!isValidEmail(agentForm.email) || !agentForm.phone} style={{ opacity: (isValidEmail(agentForm.email) && agentForm.phone) ? 1 : 0.5, pointerEvents: (isValidEmail(agentForm.email) && agentForm.phone) ? 'auto' : 'none' }}>Next</button></div></div>;
-                case 3: return <div className={styles.floatingBar}><div className={styles.floatingBarInner}><button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(4)}>Submit Request</button></div></div>;
-                case 4: return <div className={styles.floatingBar}><div className={styles.floatingBarInner}><button className="geometric-btn" onClick={() => router.push('/portal')}>Back to Dashboard</button></div></div>;
+                case 1: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(2)} disabled={!agentForm.name} style={{ opacity: agentForm.name ? 1 : 0.5, pointerEvents: agentForm.name ? 'auto' : 'none' }}>Next</button></div>;
+                case 2: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(1)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(3)} disabled={!isValidEmail(agentForm.email) || !agentForm.phone} style={{ opacity: (isValidEmail(agentForm.email) && agentForm.phone) ? 1 : 0.5, pointerEvents: (isValidEmail(agentForm.email) && agentForm.phone) ? 'auto' : 'none' }}>Next</button></div>;
+                case 3: return <div className={styles.floatingBar}><button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button><button className="geometric-btn" onClick={() => setStep(4)}>Submit Request</button></div>;
+                case 4: return <div className={styles.floatingBar}><button className="geometric-btn" onClick={() => router.push('/portal')}>Back to Dashboard</button></div>;
             }
         }
         if (bookingMode === 'self') {
             switch (step) {
                 case 1:
-                    if (isSearchingFlights) return null;
                     const showFlightResults = !isSearchingFlights && hasSearchedFlights && flightResults.length > 0;
                     return (
-                        <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                        <div className={styles.floatingBar}>
                             {showFlightResults ? (
                                 <>
                                     <button className={styles.backBtn} onClick={() => { setFlightResults([]); setHasSearchedFlights(false); setSelectedFlight(null); }}><ArrowLeft size={18} /> Back</button>
@@ -1654,24 +1557,23 @@ function BookingInner() {
                                     <button className={styles.backBtn} onClick={() => setStep(0)}><ArrowLeft size={18} /> Back</button>
                                     <button className="geometric-btn" onClick={searchFlights} disabled={!canSearchFlights || isSearchingFlights}
                                         style={{ opacity: canSearchFlights && !isSearchingFlights ? 1 : 0.5, pointerEvents: canSearchFlights && !isSearchingFlights ? 'auto' : 'none' }}>
-                                        Search Flights
+                                        {isSearchingFlights ? <><Loader2 size={20} className={styles.spinner} /> Searching Flights...</> : 'Search Flights'}
                                     </button>
                                 </>
                             )}
-                        </div></div>
+                        </div>
                     );
                 case 2:
-                    if (isSearchingHotels) return null;
                     if (wantsHotel === null) {
                         return (
-                            <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                            <div className={styles.floatingBar}>
                                 <button className={styles.backBtn} onClick={() => prefilledBookKey ? router.push('/portal') : setStep(1)}><ArrowLeft size={18} /> {prefilledBookKey ? 'Back to Dashboard' : 'Back'}</button>
-                            </div></div>
+                            </div>
                         );
                     }
                     const showHotelResults = !isSearchingHotels && hasSearchedHotels && hotelResults.length > 0;
                     return (
-                        <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                        <div className={styles.floatingBar}>
                             {showHotelResults ? (
                                 <>
                                     <button className={styles.backBtn} onClick={() => { setHotelResults([]); setHasSearchedHotels(false); setSelectedHotel(null); setHotelPage(1); }}><ArrowLeft size={18} /> Back</button>
@@ -1683,36 +1585,38 @@ function BookingInner() {
                                 <>
                                     <button className={styles.backBtn} onClick={() => { setWantsHotel(null); setHasSearchedHotels(false); }}><ArrowLeft size={18} /> Back</button>
                                     <button className="geometric-btn" onClick={searchHotels} disabled={!hotelCity || !hotelCheckin || !hotelCheckout || isSearchingHotels}
-                                        style={{ opacity: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 'auto' : 'none' }}>
-                                        Search Hotels
+                                                        style={{ opacity: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 1 : 0.5, pointerEvents: (hotelCity && hotelCheckin && hotelCheckout && !isSearchingHotels) ? 'auto' : 'none' }}>
+                                        {isSearchingHotels ? <><Loader2 size={20} className={styles.spinner} /> Searching Hotels...</> : 'Search Hotels'}
                                     </button>
                                 </>
                             )}
-                        </div></div>
+                        </div>
                     );
                 case 3:
                     return (
-                        <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                        <div className={styles.floatingBar}>
                             <button className={styles.backBtn} onClick={() => setStep(2)}><ArrowLeft size={18} /> Back</button>
                             <button className="geometric-btn" onClick={() => setStep(4)} disabled={!allTravelersValid}
                                 style={{ opacity: allTravelersValid ? 1 : 0.5, pointerEvents: allTravelersValid ? 'auto' : 'none' }}>
                                 Review Booking
                             </button>
-                        </div></div>
+                        </div>
                     );
                 case 4:
-                    if (isBooking) return null;
                     return (
-                        <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                        <div className={styles.floatingBar}>
                             <button className={styles.backBtn} onClick={() => setStep(3)}><ArrowLeft size={18} /> Back</button>
-                            <button className="geometric-btn" onClick={confirmBooking}>Confirm Booking</button>
-                        </div></div>
+                            <button className="geometric-btn" onClick={confirmBooking} disabled={isBooking}
+                                style={{ opacity: isBooking ? 0.7 : 1 }}>
+                                {isBooking ? <><Loader2 size={20} className={styles.spinner} /> Processing Booking...</> : 'Confirm Booking'}
+                            </button>
+                        </div>
                     );
                 case 5:
                     return (
-                        <div className={styles.floatingBar}><div className={styles.floatingBarInner}>
+                        <div className={styles.floatingBar}>
                             <button className="geometric-btn" onClick={() => router.push('/portal')}>Go to Dashboard</button>
-                        </div></div>
+                        </div>
                     );
             }
         }

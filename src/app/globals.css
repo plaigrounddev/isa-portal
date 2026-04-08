@@ -98,7 +98,7 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 0;
   /* Square buttons */
   position: relative;
   overflow: hidden;

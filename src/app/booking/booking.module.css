@@ -52,7 +52,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 20px 40px 40px;
+    padding: 60px 40px 40px;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
@@ -1416,7 +1416,7 @@
 
 @media (max-width: 768px) {
     .header { padding: 24px 20px; }
-    .bookingContent { padding: 24px 20px 40px 20px; align-items: flex-start; }
+    .bookingContent { padding: 40px 20px 40px 20px; align-items: flex-start; }
     .stepContainer { padding: 0; }
     .question { font-size: 1.8rem; margin-bottom: 24px; overflow-wrap: break-word; }
 
